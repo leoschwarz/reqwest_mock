@@ -1,0 +1,120 @@
+use reqwest::{Url, Method};
+use serde::ser::{Serialize, Serializer, SerializeStruct};
+use serde::de::{Deserialize, Deserializer, Visitor, MapAccess, Unexpected};
+use serde::de::Error as DeError;
+use std::fmt;
+use std::str::FromStr;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Request {
+    pub url: Url,
+    pub method: Method,
+    pub body: Option<Vec<u8>>,
+}
+
+impl Serialize for Request {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer
+    {
+        let mut req = serializer.serialize_struct("Request", 3)?;
+
+        req.serialize_field("url", self.url.as_ref())?;
+        req.serialize_field("method", self.method.as_ref())?;
+        req.serialize_field("body", &self.body)?;
+
+        req.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for Request {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "lowercase")]
+        enum Field {
+            Url,
+            Method,
+            Body,
+        }
+
+        struct RequestVisitor {}
+
+        impl<'de> Visitor<'de> for RequestVisitor {
+            type Value = Request;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct Request")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<Request, V::Error>
+                where V: MapAccess<'de>
+            {
+                let mut url = None;
+                let mut method = None;
+                let mut body = None;
+
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Url => {
+                            if url.is_some() {
+                                return Err(DeError::duplicate_field("url"));
+                            }
+                            let s: &str = map.next_value()?;
+                            url = Some(Url::parse(s)
+                                           .map_err(|_| {
+                                                        DeError::invalid_value(Unexpected::Str(s),
+                                                                               &"url")
+                                                    })?);
+                        }
+                        Field::Method => {
+                            if method.is_some() {
+                                return Err(DeError::duplicate_field("method"));
+                            }
+                            let s: &str = map.next_value()?;
+                            method = Some(Method::from_str(s)
+                                              .map_err(|_| {
+                                DeError::invalid_value(Unexpected::Str(s), &"method")
+                            })?);
+                        }
+                        Field::Body => {
+                            if body.is_some() {
+                                return Err(DeError::duplicate_field("body"));
+                            }
+                            body = Some(map.next_value()?);
+                        }
+                    }
+                }
+
+                Ok(Request {
+                       url: url.ok_or_else(|| DeError::missing_field("url"))?,
+                       method: method.ok_or_else(|| DeError::missing_field("method"))?,
+                       body: body,
+                   })
+            }
+        }
+
+        const FIELDS: &'static [&'static str] = &["url", "method", "body"];
+        deserializer.deserialize_struct("Request", FIELDS, RequestVisitor {})
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn serde() {
+        let req1 = Request {
+            url: Url::parse("https://example.com").unwrap(),
+            method: Method::Get,
+            body: Some(vec![2, 4, 11, 32, 99, 1, 4, 5]),
+        };
+
+        let json = ::serde_json::to_string(&req1).unwrap();
+        assert_eq!(json.len(), 73);
+
+        let req2 = ::serde_json::from_str(json.as_ref()).unwrap();
+        assert_eq!(req1, req2);
+    }
+}
