@@ -46,7 +46,7 @@
 
 #[macro_use]
 extern crate error_chain;
-pub extern crate reqwest;
+extern crate reqwest;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -67,8 +67,7 @@ mod request_builder;
 pub use self::client::{Client, DirectClient, ReplayClient};
 pub use self::error::Error;
 
-pub use reqwest::header;
-
+pub use reqwest::{header, Url, IntoUrl};
 
 /* TODO evaluate an interface like this
 /// Create a replay client instance using the specified file path as storage for
