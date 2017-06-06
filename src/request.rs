@@ -65,28 +65,27 @@ impl<'de> Deserialize<'de> for Request {
                             if url.is_some() {
                                 return Err(DeError::duplicate_field("url"));
                             }
-                            let s: &str = map.next_value()?;
-                            url = Some(Url::parse(s)
+                            let s: String = map.next_value()?;
+                            url = Some(Url::parse(s.as_ref())
                                            .map_err(|_| {
-                                                        DeError::invalid_value(Unexpected::Str(s),
-                                                                               &"url")
-                                                    })?);
+                                DeError::invalid_value(Unexpected::Str(s.as_ref()), &"url")
+                            })?);
                         }
                         Field::Method => {
                             if method.is_some() {
                                 return Err(DeError::duplicate_field("method"));
                             }
-                            let s: &str = map.next_value()?;
-                            method = Some(Method::from_str(s)
+                            let s: String = map.next_value()?;
+                            method = Some(Method::from_str(s.as_ref())
                                               .map_err(|_| {
-                                DeError::invalid_value(Unexpected::Str(s), &"method")
+                                DeError::invalid_value(Unexpected::Str(s.as_ref()), &"method")
                             })?);
                         }
                         Field::Body => {
                             if body.is_some() {
                                 return Err(DeError::duplicate_field("body"));
                             }
-                            body = Some(map.next_value()?);
+                            body = map.next_value()?;
                         }
                         Field::Headers => {
                             if headers.is_some() {

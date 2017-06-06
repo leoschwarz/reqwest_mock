@@ -15,6 +15,8 @@ pub struct ClientConfig {
     /// Enable or disable automatic setting of the `Referer` header.
     ///
     /// Default is true.
+    ///
+    /// TODO: Not actually implemented yet.
     pub referer: bool,
 
     /// Timeout for both the read and write operations of a client.

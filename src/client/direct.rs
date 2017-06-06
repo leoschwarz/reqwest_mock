@@ -60,4 +60,8 @@ impl Client for DirectClient {
     fn config(&self) -> &ClientConfig {
         &self.config
     }
+
+    fn config_mut(&mut self) -> &mut ClientConfig {
+        &mut self.config
+    }
 }

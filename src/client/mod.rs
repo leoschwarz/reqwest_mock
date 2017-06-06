@@ -11,6 +11,7 @@ pub trait Client: Sized {
     /// provided config here.
     fn execute(&self, config: Option<&ClientConfig>, request: Request) -> Result<Response, Error>;
     fn config(&self) -> &ClientConfig;
+    fn config_mut(&mut self) -> &mut ClientConfig;
 
     fn get<'cl, U: IntoUrl>(&'cl self, url: U) -> RequestBuilder<'cl, Self> {
         self.request(Method::Get, url)

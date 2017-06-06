@@ -1,3 +1,4 @@
+use error::Error;
 use reqwest::header::Headers;
 use reqwest::{Url, StatusCode, HttpVersion};
 use serde::de::Error as DeError;
@@ -23,13 +24,18 @@ pub struct Response {
     pub body: Vec<u8>,
 }
 
+impl Response {
+    pub fn body_to_utf8(&self) -> Result<String, Error> {
+        Ok(String::from_utf8(self.body.clone())?)
+    }
+}
+
 const N_RESPONSE: &'static str = "Response";
 const F_URL: &'static str = "url";
 const F_STATUS: &'static str = "status";
 const F_HEADERS: &'static str = "headers";
 const F_VERSION: &'static str = "version";
 const F_BODY: &'static str = "body";
-
 
 // TODO remove once my commit lands on crates.io
 fn serialize_http_version(v: &HttpVersion) -> String {
@@ -104,10 +110,11 @@ impl<'de> Visitor<'de> for ResponseVisitor {
                     if url.is_some() {
                         return Err(DeError::duplicate_field(F_URL));
                     }
-                    let s: &str = map.next_value()?;
-                    url = Some(Url::parse(s)
+                    let s: String = map.next_value()?;
+                    url = Some(Url::parse(s.as_ref())
                                    .map_err(|_| {
-                                                DeError::invalid_value(Unexpected::Str(s), &F_URL)
+                                                DeError::invalid_value(Unexpected::Str(s.as_ref()),
+                                                                       &F_URL)
                                             })?);
                 }
                 Field::Status => {
@@ -127,12 +134,11 @@ impl<'de> Visitor<'de> for ResponseVisitor {
                     if version.is_some() {
                         return Err(DeError::duplicate_field(F_VERSION));
                     }
-                    let s: &str = map.next_value()?;
-                    version = Some(deserialize_http_version(s)
+                    let s: String = map.next_value()?;
+                    version = Some(deserialize_http_version(s.as_ref())
                                        .map_err(|_| {
-                                                    DeError::invalid_value(Unexpected::Str(s),
-                                                                           &F_VERSION)
-                                                })?);
+                        DeError::invalid_value(Unexpected::Str(s.as_ref()), &F_VERSION)
+                    })?);
                 }
                 Field::Body => {
                     if body.is_some() {

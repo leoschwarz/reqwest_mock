@@ -70,6 +70,10 @@ impl Client for ReplayClient {
     fn config(&self) -> &ClientConfig {
         &self.config
     }
+
+    fn config_mut(&mut self) -> &mut ClientConfig {
+        &mut self.config
+    }
 }
 
 /// The data stored inside of a replay file.

@@ -10,6 +10,7 @@ error_chain! {
         Io(::std::io::Error);
         Reqwest(::reqwest::Error);
         SerdeJson(::serde_json::Error);
+        FromUtf8(::std::string::FromUtf8Error);
     }
 
     errors {
