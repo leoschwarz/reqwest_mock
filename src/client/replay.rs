@@ -7,12 +7,13 @@ use std::path::PathBuf;
 use std::fs::File;
 
 pub struct ReplayClient {
+    config: ClientConfig,
     replay_file: PathBuf,
 }
 
 impl ReplayClient {
     pub fn new<P: Into<PathBuf>>(replay_file: P) -> Self {
-        ReplayClient { replay_file: replay_file.into() }
+        ReplayClient { replay_file: replay_file.into(), config: ClientConfig::default() }
     }
 
     /// Err(…)      → something went wrong.
@@ -35,7 +36,10 @@ impl ReplayClient {
 }
 
 impl Client for ReplayClient {
-    fn execute(&self, config: &ClientConfig, request: Request) -> Result<Response, Error> {
+    fn execute(&self, config: Option<&ClientConfig>, request: Request) -> Result<Response, Error> {
+        // Use internal config if none was provided together with the request.
+        let config = config.unwrap_or_else(|| &self.config);
+
         // Check if the request was already performed with this exact arguments,
         // if it was just return the existing result otherwise perform the request and store
         // the output.
@@ -52,7 +56,7 @@ impl Client for ReplayClient {
 
         // We actually have to perform the request and store the response.
         let client = DirectClient::new();
-        let response = client.execute(config, request.clone())?;
+        let response = client.execute(Some(config), request.clone())?;
 
         self.store_data(&ReplayData {
                             request: request,
@@ -61,6 +65,10 @@ impl Client for ReplayClient {
 
         // Return the response.
         Ok(response)
+    }
+
+    fn config(&self) -> &ClientConfig {
+        &self.config
     }
 }
 

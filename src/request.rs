@@ -1,14 +1,16 @@
 use reqwest::{Url, Method};
+use reqwest::header::Headers;
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use serde::de::{Deserialize, Deserializer, Visitor, MapAccess, Unexpected};
 use serde::de::Error as DeError;
 use std::fmt;
 use std::str::FromStr;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Request {
     pub url: Url,
     pub method: Method,
+    pub headers: Headers,
     pub body: Option<Vec<u8>>,
 }
 
@@ -16,11 +18,12 @@ impl Serialize for Request {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: Serializer
     {
-        let mut req = serializer.serialize_struct("Request", 3)?;
+        let mut req = serializer.serialize_struct("Request", 4)?;
 
         req.serialize_field("url", self.url.as_ref())?;
         req.serialize_field("method", self.method.as_ref())?;
         req.serialize_field("body", &self.body)?;
+        req.serialize_field("headers", &::helper::serialize_headers(&self.headers))?;
 
         req.end()
     }
@@ -36,6 +39,7 @@ impl<'de> Deserialize<'de> for Request {
             Url,
             Method,
             Body,
+            Headers,
         }
 
         struct RequestVisitor {}
@@ -53,6 +57,7 @@ impl<'de> Deserialize<'de> for Request {
                 let mut url = None;
                 let mut method = None;
                 let mut body = None;
+                let mut headers = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -83,6 +88,12 @@ impl<'de> Deserialize<'de> for Request {
                             }
                             body = Some(map.next_value()?);
                         }
+                        Field::Headers => {
+                            if headers.is_some() {
+                                return Err(DeError::duplicate_field("headers"));
+                            }
+                            headers = Some(::helper::deserialize_headers(&map.next_value()?));
+                        }
                     }
                 }
 
@@ -90,6 +101,7 @@ impl<'de> Deserialize<'de> for Request {
                        url: url.ok_or_else(|| DeError::missing_field("url"))?,
                        method: method.ok_or_else(|| DeError::missing_field("method"))?,
                        body: body,
+                       headers: headers.ok_or_else(|| DeError::missing_field("headers"))?,
                    })
             }
         }
@@ -105,15 +117,20 @@ mod tests {
 
     #[test]
     fn serde() {
+        use reqwest::header::{ContentLength, UserAgent};
+
+        let mut headers = Headers::new();
+        headers.set(ContentLength(2000));
+        headers.set(UserAgent("Testing Code".to_string()));
+
         let req1 = Request {
             url: Url::parse("https://example.com").unwrap(),
             method: Method::Get,
             body: Some(vec![2, 4, 11, 32, 99, 1, 4, 5]),
+            headers: headers,
         };
 
         let json = ::serde_json::to_string(&req1).unwrap();
-        assert_eq!(json.len(), 73);
-
         let req2 = ::serde_json::from_str(json.as_ref()).unwrap();
         assert_eq!(req1, req2);
     }

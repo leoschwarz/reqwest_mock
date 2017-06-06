@@ -3,9 +3,7 @@ use reqwest::{Url, StatusCode, HttpVersion};
 use serde::de::Error as DeError;
 use serde::de::{Deserialize, Deserializer, Visitor, MapAccess, Unexpected};
 use serde::ser::{Serialize, Serializer, SerializeStruct};
-use std::collections::HashMap;
 use std::fmt;
-use std::iter::FromIterator;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Response {
@@ -32,22 +30,6 @@ const F_HEADERS: &'static str = "headers";
 const F_VERSION: &'static str = "version";
 const F_BODY: &'static str = "body";
 
-fn serialize_headers(headers: &Headers) -> HashMap<String, String> {
-    let tuples_iter = headers
-        .iter()
-        .map(|hv| (hv.name().to_string(), hv.value_string()));
-
-    HashMap::<String, String>::from_iter(tuples_iter)
-}
-
-fn deserialize_headers(map: &HashMap<String, String>) -> Headers {
-    let mut headers = ::reqwest::header::Headers::new();
-    for (name, value) in map.iter() {
-        headers.append_raw(name.clone(), value.as_bytes().to_vec())
-    }
-
-    headers
-}
 
 // TODO remove once my commit lands on crates.io
 fn serialize_http_version(v: &HttpVersion) -> String {
@@ -79,7 +61,7 @@ impl Serialize for Response {
         res.serialize_field(F_URL, self.url.as_ref())?;
         // TODO: actually the docs for this are hidden
         res.serialize_field(F_STATUS, &self.status.to_u16())?;
-        res.serialize_field(F_HEADERS, &serialize_headers(&self.headers))?;
+        res.serialize_field(F_HEADERS, &::helper::serialize_headers(&self.headers))?;
         res.serialize_field(F_VERSION, &serialize_http_version(&self.version))?;
         res.serialize_field(F_BODY, &self.body)?;
 
@@ -139,7 +121,7 @@ impl<'de> Visitor<'de> for ResponseVisitor {
                     if headers.is_some() {
                         return Err(DeError::duplicate_field(F_HEADERS));
                     }
-                    headers = Some(deserialize_headers(&map.next_value()?));
+                    headers = Some(::helper::deserialize_headers(&map.next_value()?));
                 }
                 Field::Version => {
                     if version.is_some() {

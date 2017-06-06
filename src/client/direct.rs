@@ -10,16 +10,21 @@ use std::io::Read;
 ///
 /// The idea is that this one can be used in production code,
 /// while another client is to be used in testing code.
-pub struct DirectClient {}
+pub struct DirectClient {
+    config: ClientConfig,
+}
 
 impl DirectClient {
     pub fn new() -> Self {
-        DirectClient {}
+        DirectClient { config: ClientConfig::default() }
     }
 }
 
 impl Client for DirectClient {
-    fn execute(&self, config: &ClientConfig, request: Request) -> Result<Response, Error> {
+    fn execute(&self, config: Option<&ClientConfig>, request: Request) -> Result<Response, Error> {
+        // Use internal config if none was provided together with the request.
+        let config = config.unwrap_or_else(|| &self.config);
+
         // Setup the client instance.
         let mut client = ::reqwest::Client::new()?;
         client.gzip(config.gzip);
@@ -50,5 +55,9 @@ impl Client for DirectClient {
                    buf
                },
            })
+    }
+
+    fn config(&self) -> &ClientConfig {
+        &self.config
     }
 }

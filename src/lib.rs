@@ -8,6 +8,9 @@ extern crate serde_json;
 
 use std::path::PathBuf;
 
+/// Defines some things used from different modules but not to be exported.
+mod helper;
+
 /// Defines the Error type we use in this library.
 pub mod error;
 //pub use error::*;
@@ -19,6 +22,7 @@ mod request;
 mod response;
 
 pub mod client;
+mod request_builder;
 
 /// Create a replay client instance using the specified file path as storage for
 /// request and response data.
