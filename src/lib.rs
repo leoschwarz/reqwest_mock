@@ -6,7 +6,7 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 
-use std::path::Path;
+use std::path::PathBuf;
 
 /// Defines the Error type we use in this library.
 pub mod error;
@@ -22,4 +22,6 @@ pub mod client;
 
 /// Create a replay client instance using the specified file path as storage for
 /// request and response data.
-pub fn replay<P: AsRef<Path>>(replay_file: P) {}
+pub fn replay<P: Into<PathBuf>>(replay_file: P) -> client::ReplayClient {
+    client::ReplayClient::new(replay_file)
+}

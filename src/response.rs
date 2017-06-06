@@ -5,7 +5,6 @@ use serde::de::{Deserialize, Deserializer, Visitor, MapAccess, Unexpected};
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use std::collections::HashMap;
 use std::fmt;
-use std::str::FromStr;
 use std::iter::FromIterator;
 
 #[derive(Clone, Debug, PartialEq)]
