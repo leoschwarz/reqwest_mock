@@ -15,7 +15,10 @@ pub struct ReplayClient {
 impl ReplayClient {
     /// Create a new `ReplayClient` instance reading and writing to the specified replay file.
     pub fn new<P: Into<PathBuf>>(replay_file: P) -> Self {
-        ReplayClient { replay_file: replay_file.into(), config: ClientConfig::default() }
+        ReplayClient {
+            replay_file: replay_file.into(),
+            config: ClientConfig::default(),
+        }
     }
 
     /// Err(…)      → something went wrong.

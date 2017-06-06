@@ -18,10 +18,10 @@ impl<'cl, Cl: Client + 'cl> RequestBuilder<'cl, Cl> {
     pub fn new<U: IntoUrl>(client: &'cl Cl, url: U, method: Method) -> Self {
         RequestBuilder {
             client: client,
-            url: url.into_url().chain_err(||"invalid url"),
+            url: url.into_url().chain_err(|| "invalid url"),
             method: method,
             headers: Headers::new(),
-            body: None
+            body: None,
         }
     }
 
@@ -48,7 +48,7 @@ impl<'cl, Cl: Client + 'cl> RequestBuilder<'cl, Cl> {
             url: self.url?,
             method: self.method,
             headers: self.headers,
-            body: self.body
+            body: self.body,
         };
 
         self.client.execute(None, request)
