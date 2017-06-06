@@ -1,3 +1,5 @@
+//! Defines the `Error` type we use in this library (error-chain).
+
 error_chain! {
     types {
         Error, ErrorKind, ResultExt;

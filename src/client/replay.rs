@@ -6,12 +6,14 @@ use response::Response;
 use std::path::PathBuf;
 use std::fs::File;
 
+/// Records responses to requests and replays them if the request is unchanged.
 pub struct ReplayClient {
     config: ClientConfig,
     replay_file: PathBuf,
 }
 
 impl ReplayClient {
+    /// Create a new `ReplayClient` instance reading and writing to the specified replay file.
     pub fn new<P: Into<PathBuf>>(replay_file: P) -> Self {
         ReplayClient { replay_file: replay_file.into(), config: ClientConfig::default() }
     }

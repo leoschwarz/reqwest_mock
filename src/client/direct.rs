@@ -1,5 +1,3 @@
-//! Just a regular client performing no mocking at all.
-
 use client::{Client, Response};
 use config::ClientConfig;
 use error::Error;

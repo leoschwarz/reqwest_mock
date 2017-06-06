@@ -19,7 +19,7 @@ fn main() {
     // times.
     assert!(r1 != r2);
 
-    let mut c2 = reqwest_mock::replay("simple.replay");
+    let c2 = ReplayClient::new("simple.replay");
     let r1 = perform_request(&c2, URL);
     let r2 = perform_request(&c2, URL);
     assert_eq!(r1, r2);

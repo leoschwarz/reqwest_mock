@@ -1,5 +1,8 @@
+//! Some types used to configure a `Client` instance.
+
 use std::time::Duration;
 
+/// Configures some parameters for a `Client` instance.
 #[derive(Clone, Debug)]
 pub struct ClientConfig {
     /// Enable auto gzip decompression checking the `ContentEncoding` response header.

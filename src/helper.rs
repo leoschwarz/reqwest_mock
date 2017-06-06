@@ -1,3 +1,5 @@
+//! Defines some things used from different modules but not to be exported.
+
 use reqwest::header::Headers;
 use std::collections::HashMap;
 use std::iter::FromIterator;
