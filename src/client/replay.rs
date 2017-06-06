@@ -4,7 +4,7 @@ use error::Error;
 use request::Request;
 use response::Response;
 use std::path::PathBuf;
-use std::fs::File;
+use std::fs::{File, create_dir_all};
 
 /// Records responses to requests and replays them if the request is unchanged.
 pub struct ReplayClient {
@@ -34,6 +34,14 @@ impl ReplayClient {
     }
 
     fn store_data(&self, data: &ReplayData) -> Result<(), Error> {
+        // Attempt to create the directory of the file if it doesn't exist yet.
+        if let Some(parent) = self.replay_file.parent() {
+            if !parent.exists() {
+                create_dir_all(parent)?;
+            }
+        }
+
+        // Write the file.
         let file = File::create(&self.replay_file)?;
         ::serde_json::to_writer(file, data)?;
         Ok(())
