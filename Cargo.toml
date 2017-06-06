@@ -3,6 +3,10 @@ name = "reqwest_mock"
 version = "0.1.0"
 authors = ["Leo Schwarz <mail@leoschwarz.com>"]
 license = "Apache-2.0"
+description = "Provides a mockable reqwest-like HTTP client."
+repository = "https://github.com/leoschwarz/reqwest_mock"
+documentation = "https://docs.rs/reqwest_mock/"
+keywords = ["http", "request", "client"]
 
 [dependencies]
 error-chain = "0.10.0"
