@@ -69,5 +69,8 @@ pub use self::direct::DirectClient;
 mod replay;
 pub use self::replay::ReplayClient;
 
+//mod stub;
+//pub use self::stub::StubClient;
+
 mod generic;
 pub use self::generic::GenericClient;
