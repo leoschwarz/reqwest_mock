@@ -64,15 +64,7 @@ mod response;
 pub mod client;
 mod request_builder;
 
-pub use self::client::{Client, DirectClient, ReplayClient};
+pub use self::client::{Client, DirectClient, ReplayClient, GenericClient};
 pub use self::error::Error;
 
 pub use reqwest::{header, Url, UrlError, IntoUrl};
-
-/* TODO evaluate an interface like this
-/// Create a replay client instance using the specified file path as storage for
-/// request and response data.
-pub fn replay<P: Into<PathBuf>>(replay_file: P) -> client::ReplayClient {
-    client::ReplayClient::new(replay_file)
-}
-*/

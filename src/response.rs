@@ -60,15 +60,22 @@ fn deserialize_http_version(v: &str) -> Result<HttpVersion, ()> {
 
 impl Serialize for Response {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where S: Serializer
+    where
+        S: Serializer,
     {
         let mut res = serializer.serialize_struct(N_RESPONSE, 5)?;
 
         res.serialize_field(F_URL, self.url.as_ref())?;
         // TODO: actually the docs for this are hidden
         res.serialize_field(F_STATUS, &self.status.to_u16())?;
-        res.serialize_field(F_HEADERS, &::helper::serialize_headers(&self.headers))?;
-        res.serialize_field(F_VERSION, &serialize_http_version(&self.version))?;
+        res.serialize_field(
+            F_HEADERS,
+            &::helper::serialize_headers(&self.headers),
+        )?;
+        res.serialize_field(
+            F_VERSION,
+            &serialize_http_version(&self.version),
+        )?;
         res.serialize_field(F_BODY, &self.body)?;
 
         res.end()
@@ -96,7 +103,8 @@ impl<'de> Visitor<'de> for ResponseVisitor {
     }
 
     fn visit_map<V>(self, mut map: V) -> Result<Response, V::Error>
-        where V: MapAccess<'de>
+    where
+        V: MapAccess<'de>,
     {
         let mut url = None;
         let mut status = None;
@@ -111,11 +119,9 @@ impl<'de> Visitor<'de> for ResponseVisitor {
                         return Err(DeError::duplicate_field(F_URL));
                     }
                     let s: String = map.next_value()?;
-                    url = Some(Url::parse(s.as_ref())
-                                   .map_err(|_| {
-                                                DeError::invalid_value(Unexpected::Str(s.as_ref()),
-                                                                       &F_URL)
-                                            })?);
+                    url = Some(Url::parse(s.as_ref()).map_err(|_| {
+                        DeError::invalid_value(Unexpected::Str(s.as_ref()), &F_URL)
+                    })?);
                 }
                 Field::Status => {
                     if status.is_some() {
@@ -135,8 +141,7 @@ impl<'de> Visitor<'de> for ResponseVisitor {
                         return Err(DeError::duplicate_field(F_VERSION));
                     }
                     let s: String = map.next_value()?;
-                    version = Some(deserialize_http_version(s.as_ref())
-                                       .map_err(|_| {
+                    version = Some(deserialize_http_version(s.as_ref()).map_err(|_| {
                         DeError::invalid_value(Unexpected::Str(s.as_ref()), &F_VERSION)
                     })?);
                 }
@@ -150,18 +155,19 @@ impl<'de> Visitor<'de> for ResponseVisitor {
         }
 
         Ok(Response {
-               url: url.ok_or_else(|| DeError::missing_field(F_URL))?,
-               status: status.ok_or_else(|| DeError::missing_field(F_STATUS))?,
-               headers: headers.ok_or_else(|| DeError::missing_field(F_HEADERS))?,
-               version: version.ok_or_else(|| DeError::missing_field(F_VERSION))?,
-               body: body.ok_or_else(|| DeError::missing_field(F_BODY))?,
-           })
+            url: url.ok_or_else(|| DeError::missing_field(F_URL))?,
+            status: status.ok_or_else(|| DeError::missing_field(F_STATUS))?,
+            headers: headers.ok_or_else(|| DeError::missing_field(F_HEADERS))?,
+            version: version.ok_or_else(|| DeError::missing_field(F_VERSION))?,
+            body: body.ok_or_else(|| DeError::missing_field(F_BODY))?,
+        })
     }
 }
 
 impl<'de> Deserialize<'de> for Response {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where D: Deserializer<'de>
+    where
+        D: Deserializer<'de>,
     {
         const FIELDS: &'static [&'static str] = &[F_URL, F_STATUS, F_HEADERS, F_VERSION, F_BODY];
         deserializer.deserialize_struct(N_RESPONSE, FIELDS, ResponseVisitor {})

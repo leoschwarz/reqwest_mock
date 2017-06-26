@@ -43,16 +43,16 @@ impl Client for DirectClient {
 
         // Extract the response.
         Ok(Response {
-               url: response.url().clone(),
-               status: response.status().clone(),
-               headers: response.headers().clone(),
-               version: response.version().clone(),
-               body: {
-                   let mut buf = Vec::<u8>::new();
-                   response.read_to_end(&mut buf)?;
-                   buf
-               },
-           })
+            url: response.url().clone(),
+            status: response.status().clone(),
+            headers: response.headers().clone(),
+            version: response.version().clone(),
+            body: {
+                let mut buf = Vec::<u8>::new();
+                response.read_to_end(&mut buf)?;
+                buf
+            },
+        })
     }
 
     fn config(&self) -> &ClientConfig {

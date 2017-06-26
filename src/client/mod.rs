@@ -68,3 +68,6 @@ pub use self::direct::DirectClient;
 
 mod replay;
 pub use self::replay::ReplayClient;
+
+mod generic;
+pub use self::generic::GenericClient;

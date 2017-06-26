@@ -72,9 +72,9 @@ impl Client for ReplayClient {
         let response = client.execute(Some(config), request.clone())?;
 
         self.store_data(&ReplayData {
-                            request: request,
-                            response: response.clone(),
-                        })?;
+            request: request,
+            response: response.clone(),
+        })?;
 
         // Return the response.
         Ok(response)

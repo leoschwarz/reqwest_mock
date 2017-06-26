@@ -5,9 +5,9 @@ use std::collections::HashMap;
 use std::iter::FromIterator;
 
 pub fn serialize_headers(headers: &Headers) -> HashMap<String, String> {
-    let tuples_iter = headers
-        .iter()
-        .map(|hv| (hv.name().to_string(), hv.value_string()));
+    let tuples_iter = headers.iter().map(|hv| {
+        (hv.name().to_string(), hv.value_string())
+    });
 
     HashMap::<String, String>::from_iter(tuples_iter)
 }
