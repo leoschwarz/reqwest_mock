@@ -80,6 +80,7 @@ impl ReplayClient {
     fn get_data(&self, request: &Request) -> Result<Option<ReplayData>, Error> {
         let file = self.replay_file_path(request);
         let force_record = self.force_record_next.swap(false, Ordering::SeqCst);
+        debug!("Checking presence of replay file: {:?}", file);
 
         if !file.exists() {
             debug!("Existing replay file was found.");
