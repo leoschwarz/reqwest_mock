@@ -82,10 +82,13 @@ impl ReplayClient {
         let force_record = self.force_record_next.swap(false, Ordering::SeqCst);
 
         if !file.exists() {
+            debug!("Existing replay file was found.");
             Ok(None)
         } else if force_record {
+            debug!("Replay file exists but force record was requested.");
             Ok(None)
         } else {
+            debug!("Reading existing replay file.");
             let f = File::open(&file)?;
             Ok(::serde_json::from_reader(f)?)
         }
@@ -93,6 +96,7 @@ impl ReplayClient {
 
     fn store_data(&self, data: &ReplayData) -> Result<(), Error> {
         let file = self.replay_file_path(&data.request);
+        debug!("Writing replay file at: {:?}", file);
 
         // Attempt to create the directory of the file if it doesn't exist yet.
         if let Some(parent) = file.parent() {
@@ -110,6 +114,15 @@ impl ReplayClient {
 
 impl Client for ReplayClient {
     fn execute(&self, config: Option<&ClientConfig>, request: Request) -> Result<Response, Error> {
+        // Some information potentially useful for debugging.
+        debug!(
+            "ReplayClient performing {} request of URL: {}",
+            request.method,
+            request.url
+        );
+        trace!("request headers: {}", request.headers);
+        trace!("request body: {:?}", request.body);
+
         // Use internal config if none was provided together with the request.
         let config = config.unwrap_or_else(|| &self.config);
 

@@ -20,6 +20,15 @@ impl DirectClient {
 
 impl Client for DirectClient {
     fn execute(&self, config: Option<&ClientConfig>, request: Request) -> Result<Response, Error> {
+        // Some information potentially useful for debugging.
+        debug!(
+            "ReplayClient performing {} request of URL: {}",
+            request.method,
+            request.url
+        );
+        trace!("request headers: {}", request.headers);
+        trace!("request body: {:?}", request.body);
+
         // Use internal config if none was provided together with the request.
         let config = config.unwrap_or_else(|| &self.config);
 
