@@ -1,5 +1,5 @@
 use client::{Client, Response};
-use client::{DirectClient, ReplayClient};
+use client::{DirectClient, RecordingTarget, ReplayClient};
 use config::ClientConfig;
 use error::Error;
 use request::Request;
@@ -22,18 +22,29 @@ impl GenericClient {
         DirectClient::new().into()
     }
 
-    /// Create a `GenericClient` using `ReplayClient` internally.
-    pub fn replay<P: Into<PathBuf>>(replay_file: P) -> Self {
-        ReplayClient::new(replay_file).into()
+    /// Create a `GenericClient` using `ReplayClient` internally, recording one single
+    /// request to one single replay file. If a differing request is made, the file will be
+    /// overwritten again.
+    pub fn replay_file<P: Into<PathBuf>>(replay_file: P) -> Self {
+        ReplayClient::new(RecordingTarget::File(replay_file.into())).into()
     }
 
+    /// Create a `GenericClient` using `ReplayClient` internally, recording multiple requests
+    /// to a single directory. Each unique request will get its own replay file independent of
+    /// other requests in the specified directory.
+    pub fn replay_dir<P: Into<PathBuf>>(replay_dir: P) -> Self {
+        ReplayClient::new(RecordingTarget::Dir(replay_dir.into())).into()
+    }
+
+    /*
     /// Convert the current instance to a `ReplayClient` replaying the file at the provided path.
     ///
     /// This can also be used to just switch the replay file as each file is only used for one
     /// request/response pair.
     pub fn replay_file<P: Into<PathBuf>>(&mut self, path: P) {
-        self.inner = InnerClient::Replay(ReplayClient::new(path));
+        self.inner = InnerClient::Replay(ReplayClient::new(RecordingTarget::File(path.into())));
     }
+    */
 }
 
 impl From<DirectClient> for GenericClient {
