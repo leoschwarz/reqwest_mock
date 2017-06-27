@@ -4,6 +4,7 @@ use serde::ser::{Serialize, Serializer, SerializeStruct};
 use serde::de::{Deserialize, Deserializer, Visitor, MapAccess, Unexpected};
 use serde::de::Error as DeError;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -12,6 +13,16 @@ pub struct Request {
     pub method: Method,
     pub headers: Headers,
     pub body: Option<Vec<u8>>,
+}
+
+/// We need this so we can generate unique filenames for each request.
+impl Hash for Request {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.url.hash(state);
+        self.method.hash(state);
+        ::helper::serialize_headers(&self.headers).hash(state);
+        self.body.hash(state);
+    }
 }
 
 impl Serialize for Request {
