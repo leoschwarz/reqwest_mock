@@ -26,6 +26,14 @@ impl GenericClient {
     pub fn replay<P: Into<PathBuf>>(replay_file: P) -> Self {
         ReplayClient::new(replay_file).into()
     }
+
+    /// Convert the current instance to a `ReplayClient` replaying the file at the provided path.
+    ///
+    /// This can also be used to just switch the replay file as each file is only used for one
+    /// request/response pair.
+    pub fn replay_file<P: Into<PathBuf>>(&mut self, path: P) {
+        self.inner = InnerClient::Replay(ReplayClient::new(path));
+    }
 }
 
 impl From<DirectClient> for GenericClient {
