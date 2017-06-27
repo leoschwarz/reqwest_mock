@@ -36,6 +36,15 @@ impl GenericClient {
         ReplayClient::new(RecordingTarget::Dir(replay_dir.into())).into()
     }
 
+    /// If this is a ReplayClient it will inform the Replay Client that whichever next request is
+    /// made should be recorded again, even if it has been made exactly this way before.
+    pub fn force_record_next(&self) {
+        match self.inner {
+            InnerClient::Direct(_) => {}
+            InnerClient::Replay(ref replay) => replay.force_record_next(),
+        }
+    }
+
     /*
     /// Convert the current instance to a `ReplayClient` replaying the file at the provided path.
     ///

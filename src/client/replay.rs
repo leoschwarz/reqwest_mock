@@ -3,9 +3,11 @@ use config::ClientConfig;
 use error::Error;
 use request::Request;
 use response::Response;
+
 use std::fs::{File, create_dir_all};
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use twox_hash::XxHash;
 
 /// The recording target.
@@ -35,6 +37,7 @@ impl RecordingTarget {
 pub struct ReplayClient {
     config: ClientConfig,
     target: RecordingTarget,
+    force_record_next: AtomicBool,
 }
 
 impl ReplayClient {
@@ -43,7 +46,14 @@ impl ReplayClient {
         ReplayClient {
             config: ClientConfig::default(),
             target: target,
+            force_record_next: AtomicBool::new(false),
         }
+    }
+
+    /// Calling this method ensures that whatever next request is performed it will be recorded
+    /// again, even the exact same request was already made before.
+    pub fn force_record_next(&self) {
+        self.force_record_next.store(true, Ordering::SeqCst);
     }
 
     fn replay_file_path(&self, request: &Request) -> PathBuf {
@@ -69,7 +79,11 @@ impl ReplayClient {
     /// Ok(Some(_)) → the actual data
     fn get_data(&self, request: &Request) -> Result<Option<ReplayData>, Error> {
         let file = self.replay_file_path(request);
+        let force_record = self.force_record_next.swap(false, Ordering::SeqCst);
+
         if !file.exists() {
+            Ok(None)
+        } else if force_record {
             Ok(None)
         } else {
             let f = File::open(&file)?;
