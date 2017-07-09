@@ -35,12 +35,12 @@ struct StubResponse {
 /// use reqwest_mock::{Client, Method, StubClient, StubDefault, StubSettings, StubStrictness, Url};
 ///
 /// let mut client = StubClient::new(StubSettings {
-///     // If a request without a corresponding stub is made we want an error to be returned when
-///     // our code executes the request.
+///     // If a request without a corresponding stub is made we want an error
+///     // to be returned when our code executes the request.
 ///     default: StubDefault::Error,
 ///
-///     // We want the `StubClient` to compare actual requests and provided mocks by their method
-///     // and their url.
+///     // We want the `StubClient` to compare actual requests and provided
+///     // mocks by their method and their url.
 ///     strictness: StubStrictness::MethodUrl,
 /// });
 ///
