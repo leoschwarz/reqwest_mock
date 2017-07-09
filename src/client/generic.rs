@@ -1,5 +1,5 @@
 use client::{Client, Response};
-use client::{DirectClient, RecordingTarget, ReplayClient};
+use client::{DirectClient, RecordingTarget, ReplayClient, StubClient};
 use config::ClientConfig;
 use error::Error;
 use request::Request;
@@ -8,6 +8,7 @@ use std::path::PathBuf;
 enum InnerClient {
     Direct(DirectClient),
     Replay(ReplayClient),
+    Stub(StubClient),
 }
 
 /// Provides an interface over the different client types which you can use in your code
@@ -36,12 +37,18 @@ impl GenericClient {
         ReplayClient::new(RecordingTarget::Dir(replay_dir.into())).into()
     }
 
+    /// Create a `GenericClient` using `StubClient` internally.
+    pub fn stub(client: StubClient) -> Self {
+        client.into()
+    }
+
     /// If this is a ReplayClient it will inform the Replay Client that whichever next request is
     /// made should be recorded again, even if it has been made exactly this way before.
     pub fn force_record_next(&self) {
         match self.inner {
             InnerClient::Direct(_) => {}
             InnerClient::Replay(ref replay) => replay.force_record_next(),
+            InnerClient::Stub(_) => {}
         }
     }
 
@@ -68,11 +75,18 @@ impl From<ReplayClient> for GenericClient {
     }
 }
 
+impl From<StubClient> for GenericClient {
+    fn from(c: StubClient) -> Self {
+        GenericClient { inner: InnerClient::Stub(c) }
+    }
+}
+
 impl Client for GenericClient {
     fn execute(&self, config: Option<&ClientConfig>, request: Request) -> Result<Response, Error> {
         match self.inner {
             InnerClient::Direct(ref client) => client.execute(config, request),
             InnerClient::Replay(ref client) => client.execute(config, request),
+            InnerClient::Stub(ref client) => client.execute(config, request),
         }
     }
 
@@ -80,6 +94,7 @@ impl Client for GenericClient {
         match self.inner {
             InnerClient::Direct(ref client) => client.config(),
             InnerClient::Replay(ref client) => client.config(),
+            InnerClient::Stub(ref client) => client.config(),
         }
     }
 
@@ -87,6 +102,7 @@ impl Client for GenericClient {
         match self.inner {
             InnerClient::Direct(ref mut client) => client.config_mut(),
             InnerClient::Replay(ref mut client) => client.config_mut(),
+            InnerClient::Stub(ref mut client) => client.config_mut(),
         }
     }
 }
