@@ -58,8 +58,10 @@ extern crate twox_hash;
 mod helper;
 
 pub mod error;
-
 pub mod config;
+
+mod body;
+pub use body::IntoBody;
 
 mod request;
 mod response;
