@@ -3,6 +3,11 @@ use client::stub::{StubClient, StubKey, StubResponse};
 use reqwest::header::{Header, HeaderFormat, Headers};
 use reqwest::{HttpVersion, Method, StatusCode, Url};
 
+/// A request stub builder to be used in conjunction with `StubClient`.
+///
+/// After you are finished specifying the details of the matching request, call `response()` to
+/// return a `ResponseStubber` instance and start specifying the response. Finally use
+/// `ResponseStubber::mock()` to register the mock into the client.
 #[must_use]
 pub struct RequestStubber<'cl> {
     client: &'cl mut StubClient,
@@ -73,6 +78,7 @@ impl<'cl> RequestStubber<'cl> {
     }
 }
 
+/// A response stub builder to be used in conjunction with `StubClient`.
 #[must_use]
 pub struct ResponseStubber<'cl> {
     client: &'cl mut StubClient,

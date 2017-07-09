@@ -11,7 +11,7 @@ mod settings;
 pub use self::settings::{StubStrictness, StubDefault, StubSettings};
 
 mod builder;
-use self::builder::RequestStubber;
+pub use self::builder::{RequestStubber, ResponseStubber};
 
 #[derive(Hash, PartialEq, Eq)]
 struct StubKey {
@@ -28,7 +28,33 @@ struct StubResponse {
     headers: Headers,
 }
 
-/// A client which allows you to stub out the response to a request explicitely.
+/// A client which allows you to stub out the response to a request explicitly.
+///
+/// # Examples
+/// ```
+/// use reqwest_mock::{Client, Method, StubClient, StubDefault, StubSettings, StubStrictness, Url};
+///
+/// let mut client = StubClient::new(StubSettings {
+///     // If a request without a corresponding stub is made we want an error to be returned when
+///     // our code executes the request.
+///     default: StubDefault::Error,
+///
+///     // We want the `StubClient` to compare actual requests and provided mocks by their method
+///     // and their url.
+///     strictness: StubStrictness::MethodUrl,
+/// });
+///
+/// // Mock a request.
+/// client
+///     .stub(Url::parse("http://example.com/mocking").unwrap())
+///         .method(Method::Get)
+///     .response()
+///         .body("Mocking is fun!")
+///         .mock();
+///
+/// let response = client.get("http://example.com/mocking").send().unwrap();
+/// assert_eq!(response.body_to_utf8().unwrap(), "Mocking is fun!".to_string());
+/// ```
 pub struct StubClient {
     config: ClientConfig,
     stubs: HashMap<StubKey, Response>,
@@ -36,6 +62,10 @@ pub struct StubClient {
 }
 
 impl StubClient {
+    /// Create a new instance of `StubClient`.
+    ///
+    /// Please consult [StubSettings](struct.StubSettings.html) for more information about the
+    /// possible settings.
     pub fn new(stub_settings: StubSettings) -> Self {
         StubClient {
             config: ClientConfig::default(),
@@ -44,6 +74,15 @@ impl StubClient {
         }
     }
 
+    /// Provide a stub for a request to the provided url.
+    ///
+    /// This will return a [RequestStubber](struct.RequestStubber.html), which in a first step will
+    /// allow you to specify the full details of the request. Make sure that they match the
+    /// [StubStrictness](struct.StubStrictness.html) provided in the settings.
+    ///
+    /// After you are finished specifying the details of the matching request, call `response()` to
+    /// return a `ResponseStubber` instance and start specifying the response. Finally use
+    /// `ResponseStubber::mock()` to register the mock into the client.
     pub fn stub<'cl>(&'cl mut self, url: Url) -> RequestStubber<'cl> {
         RequestStubber::new(self, url)
     }

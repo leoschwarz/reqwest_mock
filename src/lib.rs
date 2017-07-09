@@ -69,7 +69,7 @@ mod response;
 pub mod client;
 mod request_builder;
 
-pub use self::client::{Client, DirectClient, ReplayClient, GenericClient};
+pub use self::client::*;
 pub use self::error::Error;
 
-pub use reqwest::{header, Url, UrlError, IntoUrl, StatusCode};
+pub use reqwest::{header, Url, UrlError, IntoUrl, Method, StatusCode};
