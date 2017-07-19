@@ -12,7 +12,7 @@ use twox_hash::XxHash;
 
 /// The version of the storage format. The code is only compatible with files of the same version,
 /// everything else will be discarded and recorded again.
-const FORMAT_VERSION: u8 = 1;
+const FORMAT_VERSION: u8 = 2;
 
 /// The recording target.
 pub enum RecordingTarget {
