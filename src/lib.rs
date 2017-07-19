@@ -50,7 +50,6 @@ extern crate error_chain;
 extern crate log;
 extern crate reqwest;
 extern crate serde;
-extern crate serde_bytes;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;

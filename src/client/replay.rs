@@ -12,7 +12,7 @@ use twox_hash::XxHash;
 
 /// The version of the storage format. The code is only compatible with files of the same version,
 /// everything else will be discarded and recorded again.
-const FORMAT_VERSION: u64 = 2;
+const FORMAT_VERSION: u8 = 1;
 
 /// The recording target.
 pub enum RecordingTarget {
@@ -101,7 +101,13 @@ impl ReplayClient {
 
             // Check the format version.
             let format_version = match value {
-                Value::Object(ref obj) => obj.get("format_version").and_then(|val| val.as_u64()),
+                Value::Object(ref obj) => {
+                    obj.get("format_version").and_then(|val| val.as_u64()).map(
+                        |n| {
+                            n as u8
+                        },
+                    )
+                }
                 _ => None,
             };
 
@@ -191,5 +197,5 @@ impl Client for ReplayClient {
 struct ReplayData {
     request: Request,
     response: Response,
-    format_version: u64,
+    format_version: u8,
 }

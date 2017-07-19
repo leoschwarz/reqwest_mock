@@ -4,7 +4,6 @@ use reqwest::{Url, StatusCode};
 use serde::de::Error as DeError;
 use serde::de::{Deserialize, Deserializer, Visitor, MapAccess, Unexpected};
 use serde::ser::{Serialize, Serializer, SerializeStruct};
-use serde_bytes::{Bytes, ByteBuf};
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -51,8 +50,7 @@ impl Serialize for Response {
             F_HEADERS,
             &::helper::serialize_headers(&self.headers),
         )?;
-        let body = Bytes::new(&self.body[..]);
-        res.serialize_field(F_BODY, &body)?;
+        res.serialize_field(F_BODY, &self.body)?;
 
         res.end()
     }
@@ -116,9 +114,7 @@ impl<'de> Visitor<'de> for ResponseVisitor {
                     if body.is_some() {
                         return Err(DeError::duplicate_field(F_BODY));
                     }
-                    let bytes: ByteBuf = map.next_value()?;
-                    // TODO if there is a copy here this is a useless overhead.
-                    body = Some(bytes.to_vec());
+                    body = Some(map.next_value()?);
                 }
             }
         }
