@@ -1,7 +1,7 @@
 use IntoBody;
 use client::stub::{StubClient, StubKey, StubResponse};
-use reqwest::header::{Header, HeaderFormat, Headers};
-use reqwest::{HttpVersion, Method, StatusCode, Url};
+use reqwest::header::{Header, Headers};
+use reqwest::{Method, StatusCode, Url};
 
 /// A request stub builder to be used in conjunction with `StubClient`.
 ///
@@ -42,7 +42,7 @@ impl<'cl> RequestStubber<'cl> {
     }
 
     /// Add a header to the request.
-    pub fn header<H: Header + HeaderFormat>(mut self, header: H) -> Self {
+    pub fn header<H: Header>(mut self, header: H) -> Self {
         self._headers = Some(self._headers.map_or_else(|| Headers::new(), |mut hs| {
             hs.set(header);
             hs
@@ -73,7 +73,6 @@ impl<'cl> RequestStubber<'cl> {
             _status_code: StatusCode::Ok,
             _body: None,
             _headers: Headers::new(),
-            _http_version: HttpVersion::Http11,
         }
     }
 }
@@ -87,7 +86,6 @@ pub struct ResponseStubber<'cl> {
     _status_code: StatusCode,
     _body: Option<Vec<u8>>,
     _headers: Headers,
-    _http_version: HttpVersion,
 }
 
 impl<'cl> ResponseStubber<'cl> {
@@ -104,7 +102,7 @@ impl<'cl> ResponseStubber<'cl> {
     }
 
     /// Add a header to the response.
-    pub fn header<H: Header + HeaderFormat>(mut self, header: H) -> Self {
+    pub fn header<H: Header>(mut self, header: H) -> Self {
         self._headers.set(header);
         self
     }
@@ -115,19 +113,12 @@ impl<'cl> ResponseStubber<'cl> {
         self
     }
 
-    /// Set the HTTP version variable of the response.
-    pub fn http_version(mut self, version: HttpVersion) -> Self {
-        self._http_version = version;
-        self
-    }
-
     /// Register the mock in the client.
     pub fn mock(self) {
         let resp = StubResponse {
             status_code: self._status_code,
             body: self._body,
             headers: self._headers,
-            http_version: self._http_version,
         };
         self.client.register_stub(self.req, resp);
     }

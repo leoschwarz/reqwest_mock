@@ -3,9 +3,8 @@ use client::Client;
 use reqwest::{IntoUrl, Url, Method};
 use request::Request;
 use response::Response;
-use reqwest::header::{Headers, Header, HeaderFormat};
+use reqwest::header::{Headers, Header};
 use error::{Error, ResultExt};
-
 
 pub struct RequestBuilder<'cl, Cl: Client + 'cl> {
     client: &'cl Cl,
@@ -29,7 +28,7 @@ impl<'cl, Cl: Client + 'cl> RequestBuilder<'cl, Cl> {
     }
 
     /// Add a header to the request.
-    pub fn header<H: Header + HeaderFormat>(mut self, header: H) -> Self {
+    pub fn header<H: Header>(mut self, header: H) -> Self {
         self.headers.set(header);
         self
     }
