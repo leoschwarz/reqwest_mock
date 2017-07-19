@@ -10,6 +10,10 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use twox_hash::XxHash;
 
+/// The version of the storage format. The code is only compatible with files of the same version,
+/// everything else will be discarded and recorded again.
+const FORMAT_VERSION: u8 = 1;
+
 /// The recording target.
 pub enum RecordingTarget {
     /// A single file is used for recording one request, if the request changes the file is
@@ -89,9 +93,33 @@ impl ReplayClient {
             debug!("Replay file exists but force record was requested.");
             Ok(None)
         } else {
+            use serde_json::Value;
+
             debug!("Reading existing replay file.");
             let f = File::open(&file)?;
-            Ok(::serde_json::from_reader(f)?)
+            let value: Value = ::serde_json::from_reader(f)?;
+
+            // Check the format version.
+            let format_version = match value {
+                Value::Object(ref obj) => {
+                    obj.get("format_version").and_then(|val| val.as_u64()).map(
+                        |n| {
+                            n as u8
+                        },
+                    )
+                }
+                _ => None,
+            };
+
+            if format_version == Some(FORMAT_VERSION) {
+                Ok(::serde_json::from_value(value)?)
+            } else {
+                debug!(
+                    "Replay file exists but has wrong format version: {:?}",
+                    format_version
+                );
+                Ok(None)
+            }
         }
     }
 
@@ -148,6 +176,7 @@ impl Client for ReplayClient {
         self.store_data(&ReplayData {
             request: request,
             response: response.clone(),
+            format_version: FORMAT_VERSION,
         })?;
 
         // Return the response.
@@ -168,4 +197,5 @@ impl Client for ReplayClient {
 struct ReplayData {
     request: Request,
     response: Response,
+    format_version: u8,
 }
