@@ -46,9 +46,9 @@ impl GenericClient {
     /// made should be recorded again, even if it has been made exactly this way before.
     pub fn force_record_next(&self) {
         match self.inner {
-            InnerClient::Direct(_) => {}
-            InnerClient::Replay(ref replay) => replay.force_record_next(),
+            InnerClient::Direct(_) |
             InnerClient::Stub(_) => {}
+            InnerClient::Replay(ref replay) => replay.force_record_next(),
         }
     }
 

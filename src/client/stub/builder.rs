@@ -43,7 +43,7 @@ impl<'cl> RequestStubber<'cl> {
 
     /// Add a header to the request.
     pub fn header<H: Header + HeaderFormat>(mut self, header: H) -> Self {
-        self._headers = Some(self._headers.map_or_else(|| Headers::new(), |mut hs| {
+        self._headers = Some(self._headers.map_or_else(Headers::new, |mut hs| {
             hs.set(header);
             hs
         }));
@@ -52,7 +52,7 @@ impl<'cl> RequestStubber<'cl> {
 
     /// Add multiple headers to the request.
     pub fn headers(mut self, headers: Headers) -> Self {
-        self._headers = Some(self._headers.map_or_else(|| Headers::new(), |mut hs| {
+        self._headers = Some(self._headers.map_or_else(Headers::new, |mut hs| {
             hs.extend(headers.iter());
             hs
         }));

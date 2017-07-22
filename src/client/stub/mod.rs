@@ -184,7 +184,7 @@ impl StubClient {
             status: value.status_code,
             headers: value.headers,
             version: value.http_version,
-            body: value.body.unwrap_or_else(|| Vec::new()),
+            body: value.body.unwrap_or_else(Vec::new),
         };
         self.stubs.insert(key, response);
     }

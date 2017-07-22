@@ -17,7 +17,7 @@ fn main() {
     let r2 = perform_request(&c1, URL);
     // There was a delay between the two requests, so httpbin should have returned two different
     // times.
-    assert!(r1 != r2);
+    assert_ne!(r1, r2);
 
     let c2 = ReplayClient::new(RecordingTarget::file("simple.replay"));
     let r1 = perform_request(&c2, URL);
@@ -25,7 +25,7 @@ fn main() {
     assert_eq!(r1, r2);
 
     let r3 = perform_request(&c2, URL2);
-    assert!(r1 != r3);
+    assert_ne!(r1, r3);
 
     let r4 = perform_request(&c2, URL2);
     assert_eq!(r3, r4);
