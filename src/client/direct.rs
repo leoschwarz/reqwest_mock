@@ -33,18 +33,19 @@ impl Client for DirectClient {
         let config = config.unwrap_or_else(|| &self.config);
 
         // Setup the client instance.
-        let mut client = ::reqwest::Client::new()?;
-        client.gzip(config.gzip);
-        client.redirect(config.redirect.clone().into());
-        client.referer(config.referer);
+        let mut client_builder = ::reqwest::Client::builder()?;
+        client_builder.gzip(config.gzip);
+        client_builder.redirect(config.redirect.clone().into());
+        client_builder.referer(config.referer);
         if let Some(timeout) = config.timeout.clone() {
-            client.timeout(timeout);
+            client_builder.timeout(timeout);
         }
+        let client = client_builder.build()?;
 
         // Build the request.
-        let mut builder = client.request(request.method, request.url);
+        let mut builder = client.request(request.method, request.url)?;
         if let Some(body) = request.body {
-            builder = builder.body(body);
+            builder.body(body);
         }
 
         // Send the request.
@@ -55,7 +56,6 @@ impl Client for DirectClient {
             url: response.url().clone(),
             status: response.status().clone(),
             headers: response.headers().clone(),
-            version: response.version().clone(),
             body: {
                 let mut buf = Vec::<u8>::new();
                 response.read_to_end(&mut buf)?;

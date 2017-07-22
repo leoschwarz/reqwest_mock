@@ -36,7 +36,7 @@
 //!     pub fn get_time(&self) -> Result<String, Error> {
 //!         let response = self.client
 //!             .get("https://now.httpbin.org/")
-//!             .header(UserAgent("MyClient".to_string()))
+//!             .header(UserAgent::new("MyClient"))
 //!             .send()?;
 //!
 //!         response.body_to_utf8()

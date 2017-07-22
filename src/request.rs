@@ -135,7 +135,7 @@ mod tests {
 
         let mut headers = Headers::new();
         headers.set(ContentLength(2000));
-        headers.set(UserAgent("Testing Code".to_string()));
+        headers.set(UserAgent::new("Testing Code"));
 
         let req1 = Request {
             url: Url::parse("https://example.com").unwrap(),

@@ -30,7 +30,7 @@ mod tests {
     #[test]
     fn serialize_headers() {
         let mut headers = Headers::new();
-        headers.set(UserAgent("testing".to_string()));
+        headers.set(UserAgent::new("testing"));
         let serialized = super::serialize_headers(&headers);
         let mut expected = BTreeMap::new();
         expected.insert("User-Agent".to_string(), "testing".to_string());
@@ -43,11 +43,11 @@ mod tests {
     #[test]
     fn serialize_headers_deterministic() {
         let mut headers1 = Headers::new();
-        headers1.set(UserAgent("testing".to_string()));
+        headers1.set(UserAgent::new("testing"));
         headers1.set(ContentType::png());
         let mut headers2 = Headers::new();
         headers2.set(ContentType::png());
-        headers2.set(UserAgent("testing".to_string()));
+        headers2.set(UserAgent::new("testing"));
 
         let ser1 = super::serialize_headers(&headers1);
         let ser2 = super::serialize_headers(&headers2);

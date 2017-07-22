@@ -1,6 +1,6 @@
 use error::Error;
 use reqwest::header::Headers;
-use reqwest::{Url, StatusCode, HttpVersion};
+use reqwest::{Url, StatusCode};
 use serde::de::Error as DeError;
 use serde::de::{Deserialize, Deserializer, Visitor, MapAccess, Unexpected};
 use serde::ser::{Serialize, Serializer, SerializeStruct};
@@ -17,9 +17,6 @@ pub struct Response {
     /// Headers
     pub headers: Headers,
 
-    /// HTTP Version
-    pub version: HttpVersion,
-
     /// The response body in binary format.
     pub body: Vec<u8>,
 }
@@ -34,29 +31,7 @@ const N_RESPONSE: &'static str = "Response";
 const F_URL: &'static str = "url";
 const F_STATUS: &'static str = "status";
 const F_HEADERS: &'static str = "headers";
-const F_VERSION: &'static str = "version";
 const F_BODY: &'static str = "body";
-
-// TODO remove once my commit lands on crates.io
-fn serialize_http_version(v: &HttpVersion) -> String {
-    match *v {
-        HttpVersion::Http09 => "HTTP/0.9".to_string(),
-        HttpVersion::Http10 => "HTTP/1.0".to_string(),
-        HttpVersion::Http11 => "HTTP/1.1".to_string(),
-        HttpVersion::Http20 => "HTTP/2.0".to_string(),
-    }
-}
-
-// TODO remove once my commit lands on crates.io
-fn deserialize_http_version(v: &str) -> Result<HttpVersion, ()> {
-    match v {
-        "HTTP/0.9" => Ok(HttpVersion::Http09),
-        "HTTP/1.0" => Ok(HttpVersion::Http10),
-        "HTTP/1.1" => Ok(HttpVersion::Http11),
-        "HTTP/2.0" => Ok(HttpVersion::Http20),
-        _ => Err(()),
-    }
-}
 
 impl Serialize for Response {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -67,14 +42,13 @@ impl Serialize for Response {
 
         res.serialize_field(F_URL, self.url.as_ref())?;
         // TODO: actually the docs for this are hidden
-        res.serialize_field(F_STATUS, &self.status.to_u16())?;
+        res.serialize_field(
+            F_STATUS,
+            &u16::from(self.status.clone()),
+        )?;
         res.serialize_field(
             F_HEADERS,
             &::helper::serialize_headers(&self.headers),
-        )?;
-        res.serialize_field(
-            F_VERSION,
-            &serialize_http_version(&self.version),
         )?;
         res.serialize_field(F_BODY, &self.body)?;
 
@@ -88,7 +62,6 @@ enum Field {
     Url,
     Status,
     Headers,
-    Version,
     Body,
 }
 
@@ -109,7 +82,6 @@ impl<'de> Visitor<'de> for ResponseVisitor {
         let mut url = None;
         let mut status = None;
         let mut headers = None;
-        let mut version = None;
         let mut body = None;
 
         while let Some(key) = map.next_key()? {
@@ -128,22 +100,15 @@ impl<'de> Visitor<'de> for ResponseVisitor {
                         return Err(DeError::duplicate_field(F_STATUS));
                     }
                     let s: u16 = map.next_value()?;
-                    status = Some(StatusCode::from_u16(s));
+                    status = Some(StatusCode::try_from(s).map_err(|_| {
+                        DeError::invalid_value(Unexpected::Unsigned(s as u64), &"StatusCode")
+                    })?);
                 }
                 Field::Headers => {
                     if headers.is_some() {
                         return Err(DeError::duplicate_field(F_HEADERS));
                     }
                     headers = Some(::helper::deserialize_headers(&map.next_value()?));
-                }
-                Field::Version => {
-                    if version.is_some() {
-                        return Err(DeError::duplicate_field(F_VERSION));
-                    }
-                    let s: String = map.next_value()?;
-                    version = Some(deserialize_http_version(s.as_ref()).map_err(|_| {
-                        DeError::invalid_value(Unexpected::Str(s.as_ref()), &F_VERSION)
-                    })?);
                 }
                 Field::Body => {
                     if body.is_some() {
@@ -158,7 +123,6 @@ impl<'de> Visitor<'de> for ResponseVisitor {
             url: url.ok_or_else(|| DeError::missing_field(F_URL))?,
             status: status.ok_or_else(|| DeError::missing_field(F_STATUS))?,
             headers: headers.ok_or_else(|| DeError::missing_field(F_HEADERS))?,
-            version: version.ok_or_else(|| DeError::missing_field(F_VERSION))?,
             body: body.ok_or_else(|| DeError::missing_field(F_BODY))?,
         })
     }
@@ -169,7 +133,7 @@ impl<'de> Deserialize<'de> for Response {
     where
         D: Deserializer<'de>,
     {
-        const FIELDS: &'static [&'static str] = &[F_URL, F_STATUS, F_HEADERS, F_VERSION, F_BODY];
+        const FIELDS: &'static [&'static str] = &[F_URL, F_STATUS, F_HEADERS, F_BODY];
         deserializer.deserialize_struct(N_RESPONSE, FIELDS, ResponseVisitor {})
     }
 }
@@ -184,13 +148,12 @@ mod tests {
 
         let mut headers = Headers::new();
         headers.set(ContentLength(2000));
-        headers.set(UserAgent("Testing Code".to_string()));
+        headers.set(UserAgent::new("Testing Code"));
 
         let resp1 = Response {
             url: Url::parse("http://example.com/index.html").unwrap(),
             status: StatusCode::Ok,
             headers: headers,
-            version: HttpVersion::Http11,
             body: vec![2, 4, 8, 16, 32, 64, 42],
         };
 

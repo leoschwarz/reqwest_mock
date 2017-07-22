@@ -3,7 +3,7 @@ use config::ClientConfig;
 use error::Error;
 use request::Request;
 use reqwest::header::Headers;
-use reqwest::{HttpVersion, Method, Url, StatusCode};
+use reqwest::{Method, Url, StatusCode};
 use response::Response;
 use std::collections::{HashMap, BTreeMap};
 
@@ -24,7 +24,6 @@ struct StubKey {
 struct StubResponse {
     status_code: StatusCode,
     body: Option<Vec<u8>>,
-    http_version: HttpVersion,
     headers: Headers,
 }
 
@@ -183,7 +182,6 @@ impl StubClient {
             url: key.url.clone(),
             status: value.status_code,
             headers: value.headers,
-            version: value.http_version,
             body: value.body.unwrap_or_else(Vec::new),
         };
         self.stubs.insert(key, response);
