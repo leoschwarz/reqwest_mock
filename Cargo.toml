@@ -1,6 +1,6 @@
 [package]
 name = "reqwest_mock"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Leo Schwarz <mail@leoschwarz.com>"]
 license = "Apache-2.0"
 description = "Provides a mockable reqwest-like HTTP client."
@@ -9,6 +9,7 @@ documentation = "https://docs.rs/reqwest_mock/"
 keywords = ["http", "request", "client"]
 
 [dependencies]
+base64 = "0.6.0"
 error-chain = "0.10.0"
 log = "0.3.8"
 reqwest = "0.7"

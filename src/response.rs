@@ -1,3 +1,4 @@
+use base64;
 use error::Error;
 use reqwest::header::Headers;
 use reqwest::{Url, StatusCode};
@@ -50,7 +51,7 @@ impl Serialize for Response {
             F_HEADERS,
             &::helper::serialize_headers(&self.headers),
         )?;
-        res.serialize_field(F_BODY, &self.body)?;
+        res.serialize_field(F_BODY, &base64::encode(&self.body))?;
 
         res.end()
     }
@@ -114,7 +115,10 @@ impl<'de> Visitor<'de> for ResponseVisitor {
                     if body.is_some() {
                         return Err(DeError::duplicate_field(F_BODY));
                     }
-                    body = Some(map.next_value()?);
+                    let s: String = map.next_value()?;
+                    body = Some(base64::decode(&s).map_err(|_| {
+                        DeError::invalid_value(Unexpected::Str(s.as_ref()), &F_BODY)
+                    })?);
                 }
             }
         }

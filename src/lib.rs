@@ -44,6 +44,7 @@
 //! }
 //! ```
 
+extern crate base64;
 #[macro_use]
 extern crate error_chain;
 #[macro_use]
