@@ -22,7 +22,7 @@ impl Client for DirectClient {
     fn execute(&self, config: Option<&ClientConfig>, request: Request) -> Result<Response, Error> {
         // Some information potentially useful for debugging.
         debug!(
-            "ReplayClient performing {} request of URL: {}",
+            "DirectClient performing {} request of URL: {}",
             request.method,
             request.url
         );
@@ -33,7 +33,7 @@ impl Client for DirectClient {
         let config = config.unwrap_or_else(|| &self.config);
 
         // Setup the client instance.
-        let mut client_builder = ::reqwest::Client::builder()?;
+        let mut client_builder = ::reqwest::Client::builder();
         client_builder.gzip(config.gzip);
         client_builder.redirect(config.redirect.clone().into());
         client_builder.referer(config.referer);
@@ -43,7 +43,7 @@ impl Client for DirectClient {
         let client = client_builder.build()?;
 
         // Build the request.
-        let mut builder = client.request(request.method, request.url)?;
+        let mut builder = client.request(request.method, request.url);
         if let Some(body) = request.body {
             builder.body(body);
         }
