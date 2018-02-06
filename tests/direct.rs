@@ -22,12 +22,17 @@ fn direct_client() {
         .send()
         .unwrap();
     assert_eq!(resp.status, StatusCode::Ok);
-    let lines: Vec<String> = resp.body_to_utf8().unwrap().lines().map(String::from).collect();
+    let lines: Vec<String> = resp.body_to_utf8()
+        .unwrap()
+        .lines()
+        .map(String::from)
+        .collect();
     assert_eq!(lines[0], "43");
     assert_eq!(lines[1], "GET /abc");
 
     // Bad request.
-    let resp = client.get("http://127.0.0.1:19241/xyz")
+    let resp = client
+        .get("http://127.0.0.1:19241/xyz")
         .body("pi")
         .send()
         .unwrap();
