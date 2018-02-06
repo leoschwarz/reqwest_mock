@@ -1,9 +1,9 @@
-use body::IntoBody;
+use body::Body;
 use client::Client;
-use reqwest::{IntoUrl, Url, Method};
-use request::Request;
+use reqwest::{IntoUrl, Method, Url};
+use request::{Request, RequestHeader};
 use response::Response;
-use reqwest::header::{Headers, Header};
+use reqwest::header::{Header, Headers};
 use error::{Error, ResultExt};
 
 pub struct RequestBuilder<'cl, Cl: Client + 'cl> {
@@ -12,7 +12,7 @@ pub struct RequestBuilder<'cl, Cl: Client + 'cl> {
     url: Result<Url, Error>,
     method: Method,
     headers: Headers,
-    body: Option<Vec<u8>>,
+    body: Option<Body>,
 }
 
 impl<'cl, Cl: Client + 'cl> RequestBuilder<'cl, Cl> {
@@ -40,17 +40,19 @@ impl<'cl, Cl: Client + 'cl> RequestBuilder<'cl, Cl> {
     }
 
     /// Set the body of the request.
-    pub fn body<B: IntoBody>(mut self, body: B) -> Self {
-        self.body = Some(body.into_body());
+    pub fn body<B: Into<Body>>(mut self, body: B) -> Self {
+        self.body = Some(body.into());
         self
     }
 
     /// Send the request.
     pub fn send(self) -> Result<Response, Error> {
         let request = Request {
-            url: self.url?,
-            method: self.method,
-            headers: self.headers,
+            header: RequestHeader {
+                url: self.url?,
+                method: self.method,
+                headers: self.headers,
+            },
             body: self.body,
         };
 

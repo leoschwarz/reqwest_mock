@@ -4,7 +4,7 @@ use config::ClientConfig;
 use error::Error;
 use request::Request;
 use request_builder::RequestBuilder;
-use reqwest::{Method, IntoUrl};
+use reqwest::{IntoUrl, Method};
 use response::Response;
 
 /// Provides a unified interface over the different Clients.
@@ -70,8 +70,8 @@ mod replay;
 pub use self::replay::{RecordingTarget, ReplayClient};
 
 mod stub;
-pub use self::stub::{StubClient, StubDefault, StubSettings, StubStrictness, RequestStubber,
-                     ResponseStubber};
+pub use self::stub::{RequestStubber, ResponseStubber, StubClient, StubDefault, StubSettings,
+                     StubStrictness};
 
 mod generic;
 pub use self::generic::GenericClient;

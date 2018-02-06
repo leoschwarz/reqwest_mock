@@ -1,50 +1,83 @@
-use reqwest::{Url, Method};
+use body::Body;
+use reqwest::{Method, Url};
 use reqwest::header::Headers;
-use serde::ser::{Serialize, Serializer, SerializeStruct};
-use serde::de::{Deserialize, Deserializer, Visitor, MapAccess, Unexpected};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
+use serde::de::{Deserialize, Deserializer, MapAccess, Unexpected, Visitor};
 use serde::de::Error as DeError;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Request {
+pub struct RequestHeader {
     pub url: Url,
     pub method: Method,
     pub headers: Headers,
+}
+
+#[derive(Debug)]
+pub struct Request {
+    pub header: RequestHeader,
+    pub body: Option<Body>,
+}
+
+impl Request {
+    pub(crate) fn to_mem(self) -> Result<RequestMem, ::std::io::Error> {
+        Ok(RequestMem {
+            header: self.header,
+            body: match self.body {
+                Some(b) => Some(b.try_to_vec()?),
+                None => None,
+            },
+        })
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct RequestMem {
+    pub header: RequestHeader,
     pub body: Option<Vec<u8>>,
 }
 
+impl From<RequestMem> for Request {
+    fn from(r: RequestMem) -> Self {
+        Request {
+            header: r.header,
+            body: r.body.map(Body::from),
+        }
+    }
+}
+
 /// We need this so we can generate unique filenames for each request.
-impl Hash for Request {
+impl Hash for RequestMem {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.url.hash(state);
-        self.method.hash(state);
-        ::helper::serialize_headers(&self.headers).hash(state);
+        self.header.url.hash(state);
+        self.header.method.hash(state);
+        ::helper::serialize_headers(&self.header.headers).hash(state);
         self.body.hash(state);
     }
 }
 
-impl Serialize for Request {
+impl Serialize for RequestMem {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
         let mut req = serializer.serialize_struct("Request", 4)?;
 
-        req.serialize_field("url", self.url.as_ref())?;
-        req.serialize_field("method", self.method.as_ref())?;
+        req.serialize_field("url", self.header.url.as_ref())?;
+        req.serialize_field("method", self.header.method.as_ref())?;
         req.serialize_field("body", &self.body)?;
         req.serialize_field(
             "headers",
-            &::helper::serialize_headers(&self.headers),
+            &::helper::serialize_headers(&self.header.headers),
         )?;
 
         req.end()
     }
 }
 
-impl<'de> Deserialize<'de> for Request {
+impl<'de> Deserialize<'de> for RequestMem {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -61,13 +94,13 @@ impl<'de> Deserialize<'de> for Request {
         struct RequestVisitor {}
 
         impl<'de> Visitor<'de> for RequestVisitor {
-            type Value = Request;
+            type Value = RequestMem;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str("struct Request")
             }
 
-            fn visit_map<V>(self, mut map: V) -> Result<Request, V::Error>
+            fn visit_map<V>(self, mut map: V) -> Result<RequestMem, V::Error>
             where
                 V: MapAccess<'de>,
             {
@@ -111,11 +144,13 @@ impl<'de> Deserialize<'de> for Request {
                     }
                 }
 
-                Ok(Request {
-                    url: url.ok_or_else(|| DeError::missing_field("url"))?,
-                    method: method.ok_or_else(|| DeError::missing_field("method"))?,
+                Ok(RequestMem {
+                    header: RequestHeader {
+                        url: url.ok_or_else(|| DeError::missing_field("url"))?,
+                        method: method.ok_or_else(|| DeError::missing_field("method"))?,
+                        headers: headers.ok_or_else(|| DeError::missing_field("headers"))?,
+                    },
                     body: body,
-                    headers: headers.ok_or_else(|| DeError::missing_field("headers"))?,
                 })
             }
         }
@@ -137,11 +172,13 @@ mod tests {
         headers.set(ContentLength(2000));
         headers.set(UserAgent::new("Testing Code"));
 
-        let req1 = Request {
-            url: Url::parse("https://example.com").unwrap(),
-            method: Method::Get,
+        let req1 = RequestMem {
+            header: RequestHeader {
+                url: Url::parse("https://example.com").unwrap(),
+                method: Method::Get,
+                headers: headers,
+            },
             body: Some(vec![2, 4, 11, 32, 99, 1, 4, 5]),
-            headers: headers,
         };
 
         let json = ::serde_json::to_string(&req1).unwrap();

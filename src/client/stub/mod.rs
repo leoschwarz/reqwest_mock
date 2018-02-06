@@ -1,17 +1,23 @@
+use body::Body;
 use client::Client;
 use config::ClientConfig;
 use error::Error;
-use request::Request;
+use request::{Request, RequestHeader};
 use reqwest::header::Headers;
-use reqwest::{Method, Url, StatusCode};
+use reqwest::{Method, StatusCode, Url};
 use response::Response;
-use std::collections::{HashMap, BTreeMap};
+use std::collections::{BTreeMap, HashMap};
 
 mod settings;
-pub use self::settings::{StubStrictness, StubDefault, StubSettings};
+pub use self::settings::{StubDefault, StubSettings, StubStrictness};
 
 mod builder;
 pub use self::builder::{RequestStubber, ResponseStubber};
+
+mod error;
+pub use self::error::RegisterStubError;
+// TODO should not be public
+pub use self::error::FieldError;
 
 #[derive(Hash, PartialEq, Eq)]
 struct StubKey {
@@ -21,9 +27,30 @@ struct StubKey {
     headers: Option<BTreeMap<String, String>>,
 }
 
+struct StubRequest {
+    url: Url,
+    method: Option<Method>,
+    body: Option<Body>,
+    headers: Option<BTreeMap<String, String>>,
+}
+
+impl StubRequest {
+    fn try_to_key(self) -> Result<StubKey, ::std::io::Error> {
+        Ok(StubKey {
+            url: self.url,
+            method: self.method,
+            body: match self.body {
+                Some(b) => Some(b.try_to_vec()?),
+                None => None,
+            },
+            headers: self.headers,
+        })
+    }
+}
+
 struct StubResponse {
     status_code: StatusCode,
-    body: Option<Vec<u8>>,
+    body: Option<Body>,
     headers: Headers,
 }
 
@@ -87,69 +114,62 @@ impl StubClient {
     }
 
     /// Return the appropriate `StubKey` for the provided request.
-    fn stub_key(&self, request: &Request) -> StubKey {
+    fn stub_key(&self, header: &RequestHeader, body: &Option<Vec<u8>>) -> StubKey {
         match self.settings.strictness {
-            StubStrictness::Full => {
-                StubKey {
-                    url: request.url.clone(),
-                    method: Some(request.method.clone()),
-                    body: request.body.clone(),
-                    headers: Some(::helper::serialize_headers(&request.headers)),
-                }
-            }
-            StubStrictness::BodyMethodUrl => {
-                StubKey {
-                    url: request.url.clone(),
-                    method: Some(request.method.clone()),
-                    body: request.body.clone(),
-                    headers: None,
-                }
-            }
-            StubStrictness::HeadersMethodUrl => {
-                StubKey {
-                    url: request.url.clone(),
-                    method: Some(request.method.clone()),
-                    body: None,
-                    headers: Some(::helper::serialize_headers(&request.headers)),
-                }
-            }
-            StubStrictness::MethodUrl => {
-                StubKey {
-                    url: request.url.clone(),
-                    method: Some(request.method.clone()),
-                    body: None,
-                    headers: None,
-                }
-            }
-            StubStrictness::Url => {
-                StubKey {
-                    url: request.url.clone(),
-                    method: None,
-                    body: None,
-                    headers: None,
-                }
-            }
+            StubStrictness::Full => StubKey {
+                url: header.url.clone(),
+                method: Some(header.method.clone()),
+                body: body.clone(),
+                headers: Some(::helper::serialize_headers(&header.headers)),
+            },
+            StubStrictness::BodyMethodUrl => StubKey {
+                url: header.url.clone(),
+                method: Some(header.method.clone()),
+                body: body.clone(),
+                headers: None,
+            },
+            StubStrictness::HeadersMethodUrl => StubKey {
+                url: header.url.clone(),
+                method: Some(header.method.clone()),
+                body: None,
+                headers: Some(::helper::serialize_headers(&header.headers)),
+            },
+            StubStrictness::MethodUrl => StubKey {
+                url: header.url.clone(),
+                method: Some(header.method.clone()),
+                body: None,
+                headers: None,
+            },
+            StubStrictness::Url => StubKey {
+                url: header.url.clone(),
+                method: None,
+                body: None,
+                headers: None,
+            },
         }
     }
 
-    // TODO: Before the stable release consider an interface returning a Result which has to be
-    // unwrapped, so we don't have to use panic here and users can chose themselves how to handle
-    // an error? (Basically the decision is now made here in the code)
-    pub(self) fn register_stub(&mut self, key: StubKey, value: StubResponse) {
+    pub(self) fn register_stub(
+        &mut self,
+        key: StubKey,
+        value: StubResponse,
+    ) -> Result<(), RegisterStubError> {
         // Check if stub key contains the nescessary fields.
         macro_rules! validate_sk_field {
             (Some $field:ident $strictness:path) => (
                 if key.$field.is_none() {
-                    panic!("Tried registering stub without `{}` even though `{}` requires its presence.",
-                           stringify!($field),
-                           stringify!($strictness));
+                    return Err(RegisterStubError::MissingField(FieldError {
+                        field_name: stringify!($field),
+                        strictness: stringify!($strictness)
+                    }));
                 }
             );
             (None $field:ident $strictness:path) => (
                 if key.$field.is_some() {
-                    panic!("Tried registering stub with `{}` in the request, even though `{}` means you don't want to check it in requests. Please remove the field or set a higher `StubStrictness`.",
-                           stringify!($field),
-                           stringify!($strictness));
+                    return Err(RegisterStubError::UnescessaryField(FieldError {
+                        field_name: stringify!($field),
+                        strictness: stringify!($strictness)
+                    }));
                 }
             );
         }
@@ -182,16 +202,27 @@ impl StubClient {
             url: key.url.clone(),
             status: value.status_code,
             headers: value.headers,
-            body: value.body.unwrap_or_else(Vec::new),
+            body: value
+                .body
+                .map(|b| b.try_to_vec())
+                .unwrap_or_else(|| Ok(Vec::new()))
+                .map_err(|e| RegisterStubError::ReadFile(e))?,
         };
         self.stubs.insert(key, response);
+        Ok(())
     }
 }
 
 impl Client for StubClient {
     fn execute(&self, config: Option<&ClientConfig>, request: Request) -> Result<Response, Error> {
         // Check if there is a recorded stub for the request.
-        let key = self.stub_key(&request);
+        let header = request.header;
+        let body = match request.body {
+            Some(b) => Some(b.try_to_vec()?),
+            None => None,
+        };
+
+        let key = self.stub_key(&header, &body);
         match self.stubs.get(&key) {
             Some(resp) => Ok(resp.clone()),
             None => {
@@ -200,21 +231,23 @@ impl Client for StubClient {
                         // TODO provide more diagonistics using log crate.
                         panic!(
                             "Requested {}, without having provided a stub for it.",
-                            request.url
+                            header.url
                         );
                     }
                     StubDefault::Error => {
                         // TODO provide more diagonistics using log crate.
-                        Err(
-                            format!(
-                                "Requested {}, without having provided a stub for it.",
-                                request.url
-                            ).into(),
-                        )
+                        Err(format!(
+                            "Requested {}, without having provided a stub for it.",
+                            header.url
+                        ).into())
                     }
                     StubDefault::PerformRequest => {
                         use client::DirectClient;
                         let client = DirectClient::new();
+                        let request = Request {
+                            header: header,
+                            body: body.map(Body::from),
+                        };
                         client.execute(config, request)
                     }
                 }

@@ -62,7 +62,7 @@ pub mod error;
 pub mod config;
 
 mod body;
-pub use body::IntoBody;
+pub use body::Body;
 
 mod request;
 mod response;
@@ -73,4 +73,4 @@ mod request_builder;
 pub use self::client::*;
 pub use self::error::Error;
 
-pub use reqwest::{header, Url, UrlError, IntoUrl, Method, StatusCode};
+pub use reqwest::{header, IntoUrl, Method, StatusCode, Url, UrlError};

@@ -1,10 +1,10 @@
 use client::{Client, DirectClient};
 use config::ClientConfig;
 use error::Error;
-use request::Request;
+use request::{Request, RequestMem};
 use response::Response;
 
-use std::fs::{File, create_dir_all};
+use std::fs::{create_dir_all, File};
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -60,12 +60,12 @@ impl ReplayClient {
         self.force_record_next.store(true, Ordering::SeqCst);
     }
 
-    fn replay_file_path(&self, request: &Request) -> PathBuf {
+    fn replay_file_path(&self, request: &RequestMem) -> PathBuf {
         match self.target {
             RecordingTarget::File(ref file) => file.clone(),
             RecordingTarget::Dir(ref dir) => {
-                // TODO: took this hash function as unlike DefaultHasher it is specified.
-                //       however more evaluation should be done before settling on this
+                // TODO: I took this hash function as unlike DefaultHasher it is specified.
+                //       However more evaluation should be done before settling on this
                 //       one as the hasher for the stable release.
                 let mut hasher = XxHash::with_seed(42);
                 request.hash(&mut hasher);
@@ -81,7 +81,7 @@ impl ReplayClient {
     /// Err(_)      → something went wrong.
     /// Ok(None)    → no data was stored yet, i. e. the file doesn't exist yet.
     /// Ok(Some(_)) → the actual data
-    fn get_data(&self, request: &Request) -> Result<Option<ReplayData>, Error> {
+    fn get_data(&self, request: &RequestMem) -> Result<Option<ReplayData>, Error> {
         let file = self.replay_file_path(request);
         let force_record = self.force_record_next.swap(false, Ordering::SeqCst);
         debug!("Checking presence of replay file: {:?}", file);
@@ -101,13 +101,9 @@ impl ReplayClient {
 
             // Check the format version.
             let format_version = match value {
-                Value::Object(ref obj) => {
-                    obj.get("format_version").and_then(|val| val.as_u64()).map(
-                        |n| {
-                            n as u8
-                        },
-                    )
-                }
+                Value::Object(ref obj) => obj.get("format_version")
+                    .and_then(|val| val.as_u64())
+                    .map(|n| n as u8),
                 _ => None,
             };
 
@@ -143,14 +139,15 @@ impl ReplayClient {
 
 impl Client for ReplayClient {
     fn execute(&self, config: Option<&ClientConfig>, request: Request) -> Result<Response, Error> {
+        let req: RequestMem = request.to_mem()?;
+
         // Some information potentially useful for debugging.
         debug!(
             "ReplayClient performing {} request of URL: {}",
-            request.method,
-            request.url
+            req.header.method, req.header.url
         );
-        trace!("request headers: {}", request.headers);
-        trace!("request body: {:?}", request.body);
+        trace!("request headers: {}", req.header.headers);
+        trace!("request body: {:?}", req.body);
 
         // Use internal config if none was provided together with the request.
         let config = config.unwrap_or_else(|| &self.config);
@@ -159,22 +156,22 @@ impl Client for ReplayClient {
         // if it was just return the existing result otherwise perform the request and store
         // the output.
 
-        let data = self.get_data(&request)?;
+        let data = self.get_data(&req)?;
         if let Some(d) = data {
-            if d.request == request {
+            if d.request == req {
                 return Ok(d.response);
             } else {
                 // TODO better message
-                println!("reqwest_mock: Request has changed, recording again now.");
+                info!("reqwest_mock: Request has changed, recording again now.");
             }
         }
 
         // We actually have to perform the request and store the response.
         let client = DirectClient::new();
-        let response = client.execute(Some(config), request.clone())?;
+        let response = client.execute(Some(config), req.clone().into())?;
 
         self.store_data(&ReplayData {
-            request: request,
+            request: req,
             response: response.clone(),
             format_version: FORMAT_VERSION,
         })?;
@@ -193,9 +190,9 @@ impl Client for ReplayClient {
 }
 
 /// The data stored inside of a replay file.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct ReplayData {
-    request: Request,
+    request: RequestMem,
     response: Response,
     format_version: u8,
 }

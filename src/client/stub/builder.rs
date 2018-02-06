@@ -1,5 +1,6 @@
-use IntoBody;
-use client::stub::{StubClient, StubKey, StubResponse};
+use body::Body;
+use client::stub::{StubClient, StubRequest, StubResponse};
+use client::stub::error::RegisterStubError;
 use reqwest::header::{Header, Headers};
 use reqwest::{Method, StatusCode, Url};
 
@@ -14,7 +15,7 @@ pub struct RequestStubber<'cl> {
     url: Url,
 
     _method: Option<Method>,
-    _body: Option<Vec<u8>>,
+    _body: Option<Body>,
     _headers: Option<Headers>,
 }
 
@@ -36,8 +37,8 @@ impl<'cl> RequestStubber<'cl> {
     }
 
     /// Set the body of the request.
-    pub fn body<B: IntoBody>(mut self, body: B) -> Self {
-        self._body = Some(body.into_body());
+    pub fn body<B: Into<Body>>(mut self, body: B) -> Self {
+        self._body = Some(body.into());
         self
     }
 
@@ -63,7 +64,7 @@ impl<'cl> RequestStubber<'cl> {
     pub fn response(self) -> ResponseStubber<'cl> {
         ResponseStubber {
             client: self.client,
-            req: StubKey {
+            req: StubRequest {
                 url: self.url,
                 method: self._method,
                 body: self._body,
@@ -81,10 +82,10 @@ impl<'cl> RequestStubber<'cl> {
 #[must_use]
 pub struct ResponseStubber<'cl> {
     client: &'cl mut StubClient,
-    req: StubKey,
+    req: StubRequest,
 
     _status_code: StatusCode,
-    _body: Option<Vec<u8>>,
+    _body: Option<Body>,
     _headers: Headers,
 }
 
@@ -96,8 +97,8 @@ impl<'cl> ResponseStubber<'cl> {
     }
 
     /// Set the body of the response.
-    pub fn body<B: IntoBody>(mut self, body: B) -> Self {
-        self._body = Some(body.into_body());
+    pub fn body<B: Into<Body>>(mut self, body: B) -> Self {
+        self._body = Some(body.into());
         self
     }
 
@@ -114,12 +115,17 @@ impl<'cl> ResponseStubber<'cl> {
     }
 
     /// Register the mock in the client.
-    pub fn mock(self) {
+    pub fn mock(self) -> Result<(), RegisterStubError> {
         let resp = StubResponse {
             status_code: self._status_code,
             body: self._body,
             headers: self._headers,
         };
-        self.client.register_stub(self.req, resp);
+        self.client.register_stub(
+            self.req
+                .try_to_key()
+                .map_err(|e| RegisterStubError::ReadFile(e))?,
+            resp,
+        )
     }
 }

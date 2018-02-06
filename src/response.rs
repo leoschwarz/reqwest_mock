@@ -1,10 +1,10 @@
 use base64;
 use error::Error;
 use reqwest::header::Headers;
-use reqwest::{Url, StatusCode};
+use reqwest::{StatusCode, Url};
 use serde::de::Error as DeError;
-use serde::de::{Deserialize, Deserializer, Visitor, MapAccess, Unexpected};
-use serde::ser::{Serialize, Serializer, SerializeStruct};
+use serde::de::{Deserialize, Deserializer, MapAccess, Unexpected, Visitor};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -43,14 +43,8 @@ impl Serialize for Response {
 
         res.serialize_field(F_URL, self.url.as_ref())?;
         // TODO: actually the docs for this are hidden
-        res.serialize_field(
-            F_STATUS,
-            &u16::from(self.status.clone()),
-        )?;
-        res.serialize_field(
-            F_HEADERS,
-            &::helper::serialize_headers(&self.headers),
-        )?;
+        res.serialize_field(F_STATUS, &u16::from(self.status.clone()))?;
+        res.serialize_field(F_HEADERS, &::helper::serialize_headers(&self.headers))?;
         res.serialize_field(F_BODY, &base64::encode(&self.body))?;
 
         res.end()
@@ -65,7 +59,6 @@ enum Field {
     Headers,
     Body,
 }
-
 
 struct ResponseVisitor {}
 
@@ -92,9 +85,8 @@ impl<'de> Visitor<'de> for ResponseVisitor {
                         return Err(DeError::duplicate_field(F_URL));
                     }
                     let s: String = map.next_value()?;
-                    url = Some(Url::parse(s.as_ref()).map_err(|_| {
-                        DeError::invalid_value(Unexpected::Str(s.as_ref()), &F_URL)
-                    })?);
+                    url = Some(Url::parse(s.as_ref())
+                        .map_err(|_| DeError::invalid_value(Unexpected::Str(s.as_ref()), &F_URL))?);
                 }
                 Field::Status => {
                     if status.is_some() {

@@ -14,7 +14,9 @@ pub struct DirectClient {
 
 impl DirectClient {
     pub fn new() -> Self {
-        DirectClient { config: ClientConfig::default() }
+        DirectClient {
+            config: ClientConfig::default(),
+        }
     }
 }
 
@@ -23,11 +25,10 @@ impl Client for DirectClient {
         // Some information potentially useful for debugging.
         debug!(
             "DirectClient performing {} request of URL: {}",
-            request.method,
-            request.url
+            request.header.method, request.header.url
         );
-        trace!("request headers: {}", request.headers);
-        trace!("request body: {:?}", request.body);
+        trace!("request headers: {}", request.header.headers);
+        //trace!("request body: {:?}", request.header.body);
 
         // Use internal config if none was provided together with the request.
         let config = config.unwrap_or_else(|| &self.config);
@@ -43,9 +44,9 @@ impl Client for DirectClient {
         let client = client_builder.build()?;
 
         // Build the request.
-        let mut builder = client.request(request.method, request.url);
+        let mut builder = client.request(request.header.method, request.header.url);
         if let Some(body) = request.body {
-            builder.body(body);
+            builder.body(::reqwest::Body::from(body));
         }
 
         // Send the request.

@@ -5,9 +5,9 @@ use std::collections::BTreeMap;
 use std::iter::FromIterator;
 
 pub fn serialize_headers(headers: &Headers) -> BTreeMap<String, String> {
-    let tuples_iter = headers.iter().map(|hv| {
-        (hv.name().to_string(), hv.value_string())
-    });
+    let tuples_iter = headers
+        .iter()
+        .map(|hv| (hv.name().to_string(), hv.value_string()));
 
     BTreeMap::<String, String>::from_iter(tuples_iter)
 }
