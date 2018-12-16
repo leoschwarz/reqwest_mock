@@ -1,6 +1,6 @@
 use body::Body;
 use reqwest::{Method, Url};
-use reqwest::header::Headers;
+use reqwest::header::HeaderMap;
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 use serde::de::{Deserialize, Deserializer, MapAccess, Unexpected, Visitor};
 use serde::de::Error as DeError;
@@ -12,7 +12,7 @@ use std::str::FromStr;
 pub struct RequestHeader {
     pub url: Url,
     pub method: Method,
-    pub headers: Headers,
+    pub headers: HeaderMap,
 }
 
 #[derive(Debug)]
@@ -166,16 +166,16 @@ mod tests {
 
     #[test]
     fn serde() {
-        use reqwest::header::{ContentLength, UserAgent};
+        use reqwest::header::{CONTENT_LENGTH, USER_AGENT};
 
-        let mut headers = Headers::new();
-        headers.set(ContentLength(2000));
-        headers.set(UserAgent::new("Testing Code"));
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_LENGTH, "2000".parse().unwrap());
+        headers.insert(USER_AGENT, "Testing Code".parse().unwrap());
 
         let req1 = RequestMem {
             header: RequestHeader {
                 url: Url::parse("https://example.com").unwrap(),
-                method: Method::Get,
+                method: Method::GET,
                 headers: headers,
             },
             body: Some(vec![2, 4, 11, 32, 99, 1, 4, 5]),

@@ -27,26 +27,26 @@ impl Client for DirectClient {
             "DirectClient performing {} request of URL: {}",
             request.header.method, request.header.url
         );
-        trace!("request headers: {}", request.header.headers);
+        trace!("request headers: {:?}", request.header.headers);
         //trace!("request body: {:?}", request.header.body);
 
         // Use internal config if none was provided together with the request.
         let config = config.unwrap_or_else(|| &self.config);
 
         // Setup the client instance.
-        let mut client_builder = ::reqwest::Client::builder();
-        client_builder.gzip(config.gzip);
-        client_builder.redirect(config.redirect.clone().into());
-        client_builder.referer(config.referer);
+        let mut client_builder = ::reqwest::Client::builder()
+            .gzip(config.gzip)
+            .redirect(config.redirect.clone().into())
+            .referer(config.referer);
         if let Some(timeout) = config.timeout.clone() {
-            client_builder.timeout(timeout);
+            client_builder = client_builder.timeout(timeout);
         }
         let client = client_builder.build()?;
 
         // Build the request.
         let mut builder = client.request(request.header.method, request.header.url);
         if let Some(body) = request.body {
-            builder.body(::reqwest::Body::from(body));
+            builder = builder.body(::reqwest::Body::from(body));
         }
 
         // Send the request.

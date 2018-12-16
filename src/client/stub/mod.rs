@@ -3,7 +3,7 @@ use client::Client;
 use config::ClientConfig;
 use error::Error;
 use request::{Request, RequestHeader};
-use reqwest::header::Headers;
+use reqwest::header::HeaderMap;
 use reqwest::{Method, StatusCode, Url};
 use response::Response;
 use std::collections::{BTreeMap, HashMap};
@@ -51,7 +51,7 @@ impl StubRequest {
 struct StubResponse {
     status_code: StatusCode,
     body: Option<Body>,
-    headers: Headers,
+    headers: HeaderMap,
 }
 
 /// A client which allows you to stub out the response to a request explicitly.
@@ -73,7 +73,7 @@ struct StubResponse {
 /// // Mock a request.
 /// client
 ///     .stub(Url::parse("http://example.com/mocking").unwrap())
-///         .method(Method::Get)
+///         .method(Method::GET)
 ///     .response()
 ///         .body("Mocking is fun!")
 ///         .mock();

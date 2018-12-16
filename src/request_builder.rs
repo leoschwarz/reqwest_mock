@@ -3,7 +3,7 @@ use client::Client;
 use reqwest::{IntoUrl, Method, Url};
 use request::{Request, RequestHeader};
 use response::Response;
-use reqwest::header::{Header, Headers};
+use reqwest::header::{IntoHeaderName, HeaderValue, HeaderMap};
 use error::{Error, ResultExt};
 
 pub struct RequestBuilder<'cl, Cl: Client + 'cl> {
@@ -11,7 +11,7 @@ pub struct RequestBuilder<'cl, Cl: Client + 'cl> {
 
     url: Result<Url, Error>,
     method: Method,
-    headers: Headers,
+    headers: HeaderMap,
     body: Option<Body>,
 }
 
@@ -22,20 +22,20 @@ impl<'cl, Cl: Client + 'cl> RequestBuilder<'cl, Cl> {
             client: client,
             url: url.into_url().chain_err(|| "invalid url"),
             method: method,
-            headers: Headers::new(),
+            headers: HeaderMap::new(),
             body: None,
         }
     }
 
     /// Add a header to the request.
-    pub fn header<H: Header>(mut self, header: H) -> Self {
-        self.headers.set(header);
+    pub fn header<H: IntoHeaderName>(mut self, name: H, value: HeaderValue) -> Self {
+        self.headers.insert(name, value);
         self
     }
 
     /// Add multiple headers to the request.
-    pub fn headers(mut self, headers: Headers) -> Self {
-        self.headers.extend(headers.iter());
+    pub fn headers(mut self, headers: HeaderMap) -> Self {
+        self.headers.extend(headers);
         self
     }
 

@@ -28,32 +28,32 @@ pub trait Client: Sized {
 
     /// Convenience method to make a `GET` request to a URL.
     fn get<'cl, U: IntoUrl>(&'cl self, url: U) -> RequestBuilder<'cl, Self> {
-        self.request(Method::Get, url)
+        self.request(Method::GET, url)
     }
 
     /// Convenience method to make a `POST` request to a URL.
     fn post<'cl, U: IntoUrl>(&'cl self, url: U) -> RequestBuilder<'cl, Self> {
-        self.request(Method::Post, url)
+        self.request(Method::POST, url)
     }
 
     /// Convenience method to make a `PUT` request to a URL.
     fn put<'cl, U: IntoUrl>(&'cl self, url: U) -> RequestBuilder<'cl, Self> {
-        self.request(Method::Put, url)
+        self.request(Method::PUT, url)
     }
 
     /// Convenience method to make a `PATCH` request to a URL.
     fn patch<'cl, U: IntoUrl>(&'cl self, url: U) -> RequestBuilder<'cl, Self> {
-        self.request(Method::Patch, url)
+        self.request(Method::PATCH, url)
     }
 
     /// Convenience method to make a `DELETE` request to a URL.
     fn delete<'cl, U: IntoUrl>(&'cl self, url: U) -> RequestBuilder<'cl, Self> {
-        self.request(Method::Delete, url)
+        self.request(Method::DELETE, url)
     }
 
     /// Convenience method to make a `HEAD` request to a URL.
     fn head<'cl, U: IntoUrl>(&'cl self, url: U) -> RequestBuilder<'cl, Self> {
-        self.request(Method::Head, url)
+        self.request(Method::HEAD, url)
     }
 
     /// Returns a `RequestBuilder` for the given method and URL, which allows for further

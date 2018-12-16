@@ -10,7 +10,7 @@
 //!
 //! ```
 //! use reqwest_mock::{Client, DirectClient, ReplayClient, Error};
-//! use reqwest_mock::header::UserAgent;
+//! use reqwest_mock::header::USER_AGENT;
 //!
 //! struct MyClient<C: Client> {
 //!     client: C,
@@ -36,7 +36,7 @@
 //!     pub fn get_time(&self) -> Result<String, Error> {
 //!         let response = self.client
 //!             .get("https://now.httpbin.org/")
-//!             .header(UserAgent::new("MyClient"))
+//!             .header(USER_AGENT, "MyClient".parse().unwrap())
 //!             .send()?;
 //!
 //!         response.body_to_utf8()
@@ -47,6 +47,7 @@
 extern crate base64;
 #[macro_use]
 extern crate error_chain;
+extern crate http;
 #[macro_use]
 extern crate log;
 extern crate reqwest;
