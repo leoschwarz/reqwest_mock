@@ -1,7 +1,7 @@
 use body::Body;
 use client::stub::{StubClient, StubRequest, StubResponse};
 use client::stub::error::RegisterStubError;
-use reqwest::header::{Header, Headers};
+use reqwest::header::{IntoHeaderName, HeaderValue, HeaderMap};
 use reqwest::{Method, StatusCode, Url};
 
 /// A request stub builder to be used in conjunction with `StubClient`.
@@ -16,7 +16,7 @@ pub struct RequestStubber<'cl> {
 
     _method: Option<Method>,
     _body: Option<Body>,
-    _headers: Option<Headers>,
+    _headers: Option<HeaderMap>,
 }
 
 impl<'cl> RequestStubber<'cl> {
@@ -43,18 +43,18 @@ impl<'cl> RequestStubber<'cl> {
     }
 
     /// Add a header to the request.
-    pub fn header<H: Header>(mut self, header: H) -> Self {
-        self._headers = Some(self._headers.map_or_else(Headers::new, |mut hs| {
-            hs.set(header);
+    pub fn header<HN: IntoHeaderName>(mut self, name: HN, value: HeaderValue) -> Self {
+        self._headers = Some(self._headers.map_or_else(HeaderMap::new, |mut hs| {
+            hs.insert(name, value);
             hs
         }));
         self
     }
 
     /// Add multiple headers to the request.
-    pub fn headers(mut self, headers: Headers) -> Self {
-        self._headers = Some(self._headers.map_or_else(Headers::new, |mut hs| {
-            hs.extend(headers.iter());
+    pub fn headers(mut self, headers: HeaderMap) -> Self {
+        self._headers = Some(self._headers.map_or_else(HeaderMap::new, |mut hs| {
+            hs.extend(headers);
             hs
         }));
         self
@@ -71,9 +71,9 @@ impl<'cl> RequestStubber<'cl> {
                 headers: self._headers.map(|hs| ::helper::serialize_headers(&hs)),
             },
 
-            _status_code: StatusCode::Ok,
+            _status_code: StatusCode::OK,
             _body: None,
-            _headers: Headers::new(),
+            _headers: HeaderMap::new(),
         }
     }
 }
@@ -86,7 +86,7 @@ pub struct ResponseStubber<'cl> {
 
     _status_code: StatusCode,
     _body: Option<Body>,
-    _headers: Headers,
+    _headers: HeaderMap,
 }
 
 impl<'cl> ResponseStubber<'cl> {
@@ -103,14 +103,14 @@ impl<'cl> ResponseStubber<'cl> {
     }
 
     /// Add a header to the response.
-    pub fn header<H: Header>(mut self, header: H) -> Self {
-        self._headers.set(header);
+    pub fn header<HN: IntoHeaderName>(mut self, name: HN, value: HeaderValue) -> Self {
+        self._headers.insert(name, value);
         self
     }
 
     /// Add multiple headers to the response.
-    pub fn headers(mut self, headers: Headers) -> Self {
-        self._headers.extend(headers.iter());
+    pub fn headers(mut self, headers: HeaderMap) -> Self {
+        self._headers.extend(headers);
         self
     }
 

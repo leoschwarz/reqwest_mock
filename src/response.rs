@@ -1,6 +1,7 @@
 use base64;
 use error::Error;
-use reqwest::header::Headers;
+use http::HttpTryFrom;
+use reqwest::header::HeaderMap;
 use reqwest::{StatusCode, Url};
 use serde::de::Error as DeError;
 use serde::de::{Deserialize, Deserializer, MapAccess, Unexpected, Visitor};
@@ -16,7 +17,7 @@ pub struct Response {
     pub status: StatusCode,
 
     /// Headers
-    pub headers: Headers,
+    pub headers: HeaderMap,
 
     /// The response body in binary format.
     pub body: Vec<u8>,
@@ -140,15 +141,15 @@ mod tests {
 
     #[test]
     fn serde() {
-        use reqwest::header::{ContentLength, UserAgent};
+        use reqwest::header::{CONTENT_LENGTH, USER_AGENT};
 
-        let mut headers = Headers::new();
-        headers.set(ContentLength(2000));
-        headers.set(UserAgent::new("Testing Code"));
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_LENGTH, "2000".parse().unwrap());
+        headers.insert(USER_AGENT, "Testing Code".parse().unwrap());
 
         let resp1 = Response {
             url: Url::parse("http://example.com/index.html").unwrap(),
-            status: StatusCode::Ok,
+            status: StatusCode::OK,
             headers: headers,
             body: vec![2, 4, 8, 16, 32, 64, 42],
         };

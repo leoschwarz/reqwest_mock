@@ -146,7 +146,7 @@ impl Client for ReplayClient {
             "ReplayClient performing {} request of URL: {}",
             req.header.method, req.header.url
         );
-        trace!("request headers: {}", req.header.headers);
+        trace!("request headers: {:?}", req.header.headers);
         trace!("request body: {:?}", req.body);
 
         // Use internal config if none was provided together with the request.

@@ -21,7 +21,7 @@ fn direct_client() {
         .body("42")
         .send()
         .unwrap();
-    assert_eq!(resp.status, StatusCode::Ok);
+    assert_eq!(resp.status, StatusCode::OK);
     let lines: Vec<String> = resp.body_to_utf8()
         .unwrap()
         .lines()
@@ -36,7 +36,7 @@ fn direct_client() {
         .body("pi")
         .send()
         .unwrap();
-    assert_eq!(resp.status, StatusCode::BadRequest);
+    assert_eq!(resp.status, StatusCode::BAD_REQUEST);
     assert_eq!(resp.body_to_utf8().unwrap(), "pi");
 
     server.terminate();
