@@ -169,7 +169,7 @@ mod tests {
         use reqwest::header::{CONTENT_LENGTH, USER_AGENT};
 
         let mut headers = HeaderMap::new();
-        headers.insert(CONTENT_LENGTH, "2000".parse().unwrap());
+        headers.insert(CONTENT_LENGTH, 2000.into());
         headers.insert(USER_AGENT, "Testing Code".parse().unwrap());
 
         let req1 = RequestMem {
