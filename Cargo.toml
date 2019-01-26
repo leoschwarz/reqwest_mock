@@ -10,7 +10,7 @@ keywords = ["http", "request", "client"]
 
 [dependencies]
 base64 = "0.9.0"
-error-chain = "0.11"
+error-chain = "0.12"
 http = "0.1"
 log = "0.4.0"
 reqwest = "0.9"
