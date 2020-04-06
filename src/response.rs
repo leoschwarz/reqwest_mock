@@ -86,8 +86,9 @@ impl<'de> Visitor<'de> for ResponseVisitor {
                         return Err(DeError::duplicate_field(F_URL));
                     }
                     let s: String = map.next_value()?;
-                    url = Some(Url::parse(s.as_ref())
-                        .map_err(|_| DeError::invalid_value(Unexpected::Str(s.as_ref()), &F_URL))?);
+                    url = Some(Url::parse(s.as_ref()).map_err(|_| {
+                        DeError::invalid_value(Unexpected::Str(s.as_ref()), &F_URL)
+                    })?);
                 }
                 Field::Status => {
                     if status.is_some() {

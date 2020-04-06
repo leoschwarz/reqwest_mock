@@ -59,8 +59,8 @@ extern crate twox_hash;
 
 mod helper;
 
-pub mod error;
 pub mod config;
+pub mod error;
 
 mod body;
 pub use body::Body;

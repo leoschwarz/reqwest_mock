@@ -17,10 +17,10 @@
 //! [HEADERS]\n
 //! ```
 
-use futures::{self, Future, Stream};
 use futures::sync::oneshot;
-use hyper::{self, Request, Response, StatusCode};
+use futures::{self, Future, Stream};
 use hyper::server::{Http, Service};
+use hyper::{self, Request, Response, StatusCode};
 use regex::Regex;
 use std::net::SocketAddr;
 use std::thread;

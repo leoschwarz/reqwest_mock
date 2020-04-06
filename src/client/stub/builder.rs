@@ -1,7 +1,7 @@
 use body::Body;
-use client::stub::{StubClient, StubRequest, StubResponse};
 use client::stub::error::RegisterStubError;
-use reqwest::header::{IntoHeaderName, HeaderValue, HeaderMap};
+use client::stub::{StubClient, StubRequest, StubResponse};
+use reqwest::header::{HeaderMap, HeaderValue, IntoHeaderName};
 use reqwest::{Method, StatusCode, Url};
 
 /// A request stub builder to be used in conjunction with `StubClient`.

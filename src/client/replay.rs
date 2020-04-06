@@ -101,7 +101,8 @@ impl ReplayClient {
 
             // Check the format version.
             let format_version = match value {
-                Value::Object(ref obj) => obj.get("format_version")
+                Value::Object(ref obj) => obj
+                    .get("format_version")
                     .and_then(|val| val.as_u64())
                     .map(|n| n as u8),
                 _ => None,

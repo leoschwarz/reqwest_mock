@@ -7,8 +7,8 @@ extern crate reqwest;
 extern crate reqwest_mock;
 mod helper;
 
-use reqwest_mock::{Client, StatusCode};
 use reqwest_mock::client::DirectClient;
+use reqwest_mock::{Client, StatusCode};
 
 #[test]
 fn direct_client() {
@@ -22,7 +22,8 @@ fn direct_client() {
         .send()
         .unwrap();
     assert_eq!(resp.status, StatusCode::OK);
-    let lines: Vec<String> = resp.body_to_utf8()
+    let lines: Vec<String> = resp
+        .body_to_utf8()
         .unwrap()
         .lines()
         .map(String::from)

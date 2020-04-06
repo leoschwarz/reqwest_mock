@@ -1,10 +1,10 @@
 use body::Body;
 use client::Client;
-use reqwest::{IntoUrl, Method, Url};
-use request::{Request, RequestHeader};
-use response::Response;
-use reqwest::header::{IntoHeaderName, HeaderValue, HeaderMap};
 use error::{Error, ResultExt};
+use request::{Request, RequestHeader};
+use reqwest::header::{HeaderMap, HeaderValue, IntoHeaderName};
+use reqwest::{IntoUrl, Method, Url};
+use response::Response;
 
 pub struct RequestBuilder<'cl, Cl: Client + 'cl> {
     client: &'cl Cl,
