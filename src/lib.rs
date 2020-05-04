@@ -56,6 +56,7 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate twox_hash;
+extern crate url;
 
 mod helper;
 
@@ -74,4 +75,5 @@ mod request_builder;
 pub use self::client::*;
 pub use self::error::Error;
 
-pub use reqwest::{header, IntoUrl, Method, StatusCode, Url, UrlError};
+pub use reqwest::{header, IntoUrl, Method, StatusCode, Url};
+pub use url::ParseError as UrlError;

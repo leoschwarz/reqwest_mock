@@ -58,11 +58,11 @@ impl Default for RedirectPolicy {
     }
 }
 
-impl From<RedirectPolicy> for ::reqwest::RedirectPolicy {
+impl From<RedirectPolicy> for ::reqwest::redirect::Policy {
     fn from(p: RedirectPolicy) -> Self {
         match p {
-            RedirectPolicy::Limit(n) => ::reqwest::RedirectPolicy::limited(n),
-            RedirectPolicy::None => ::reqwest::RedirectPolicy::none(),
+            RedirectPolicy::Limit(n) => ::reqwest::redirect::Policy::limited(n),
+            RedirectPolicy::None => ::reqwest::redirect::Policy::none(),
         }
     }
 }

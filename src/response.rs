@@ -1,6 +1,5 @@
 use base64;
 use error::Error;
-use http::HttpTryFrom;
 use reqwest::header::HeaderMap;
 use reqwest::{StatusCode, Url};
 use serde::de::Error as DeError;
@@ -94,7 +93,7 @@ impl<'de> Visitor<'de> for ResponseVisitor {
                         return Err(DeError::duplicate_field(F_STATUS));
                     }
                     let s: u16 = map.next_value()?;
-                    status = Some(StatusCode::try_from(s).map_err(|_| {
+                    status = Some(StatusCode::from_u16(s).map_err(|_| {
                         DeError::invalid_value(Unexpected::Unsigned(s as u64), &"StatusCode")
                     })?);
                 }
