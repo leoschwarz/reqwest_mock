@@ -1,4 +1,5 @@
 use body::Body;
+use http::Request as HttpRequest;
 use reqwest::{Method, Url};
 use reqwest::header::HeaderMap;
 use serde::ser::{Serialize, SerializeStruct, Serializer};
@@ -30,6 +31,21 @@ impl Request {
                 None => None,
             },
         })
+    }
+}
+
+impl<T> From<HttpRequest<T>> for Request where T: Into<Body> {
+    fn from(r: HttpRequest<T>) -> Self {
+        let header = RequestHeader {
+            url: Url::parse(&format!("{}", r.uri())).unwrap(),
+            method: r.method().clone(),
+            headers: r.headers().clone(),
+        };
+
+        Request {
+            header,
+            body: Some(r.into_body().into()),
+        }
     }
 }
 
