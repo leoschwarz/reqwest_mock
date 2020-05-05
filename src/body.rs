@@ -36,8 +36,8 @@ impl Body {
     }
 }
 
-impl From<Body> for ::reqwest::Body {
-    fn from(b: Body) -> ::reqwest::Body {
+impl From<Body> for ::reqwest::blocking::Body {
+    fn from(b: Body) -> ::reqwest::blocking::Body {
         match b.value {
             BodyValue::Bytes(b) => b.into(),
             BodyValue::File(f) => f.into(),

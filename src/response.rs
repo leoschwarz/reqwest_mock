@@ -1,6 +1,6 @@
 use base64;
 use error::Error;
-use http::HttpTryFrom;
+use http::Response as HttpResponse;
 use reqwest::header::HeaderMap;
 use reqwest::{StatusCode, Url};
 use serde::de::Error as DeError;
@@ -95,7 +95,7 @@ impl<'de> Visitor<'de> for ResponseVisitor {
                         return Err(DeError::duplicate_field(F_STATUS));
                     }
                     let s: u16 = map.next_value()?;
-                    status = Some(StatusCode::try_from(s).map_err(|_| {
+                    status = Some(StatusCode::from_u16(s).map_err(|_| {
                         DeError::invalid_value(Unexpected::Unsigned(s as u64), &"StatusCode")
                     })?);
                 }
@@ -126,6 +126,19 @@ impl<'de> Visitor<'de> for ResponseVisitor {
     }
 }
 
+impl From<Response> for HttpResponse<Vec<u8>> {
+    fn from(r: Response) -> HttpResponse<Vec<u8>> {
+        let mut http_rsp = HttpResponse::builder().status(r.status);
+        let headers = http_rsp.headers_mut().unwrap();
+        for (key, value) in r.headers {
+            if let Some(k) = key {
+		headers.append(&k, value);
+            }
+        }
+        http_rsp.body(r.body).unwrap()
+    }
+}
+
 impl<'de> Deserialize<'de> for Response {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -139,25 +152,39 @@ impl<'de> Deserialize<'de> for Response {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use reqwest::header::{CONTENT_LENGTH, USER_AGENT};
 
-    #[test]
-    fn serde() {
-        use reqwest::header::{CONTENT_LENGTH, USER_AGENT};
+    fn dummy_response() -> Response {
 
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_LENGTH, 2000.into());
         headers.insert(USER_AGENT, "Testing Code".parse().unwrap());
 
-        let resp1 = Response {
+        Response {
             url: Url::parse("http://example.com/index.html").unwrap(),
             status: StatusCode::OK,
             headers: headers,
             body: vec![2, 4, 8, 16, 32, 64, 42],
-        };
+        }
+    }
 
+    #[test]
+    fn serde() {
+	let resp1 = dummy_response();
         let json = ::serde_json::to_string(&resp1).unwrap();
 
         let resp2 = ::serde_json::from_str(json.as_ref()).unwrap();
         assert_eq!(resp1, resp2);
+    }
+
+    #[test]
+    fn http_response() {
+	let resp = dummy_response();
+	let http_resp = HttpResponse::<Vec<u8>>::from(resp);
+
+	assert_eq!(http_resp.status(), http::StatusCode::OK);
+	assert_eq!(http_resp.headers().get(CONTENT_LENGTH).unwrap().to_str().unwrap(), "2000");
+	assert_eq!(http_resp.headers().get(USER_AGENT).unwrap(), "Testing Code");
+	assert_eq!(http_resp.body(), &vec![2u8, 4, 8, 16, 32, 64, 42]);
     }
 }
