@@ -25,6 +25,48 @@ pub enum RecordingTarget {
     Dir(PathBuf),
 }
 
+/// Specify the record mode.
+///
+/// Inspired by: https://vcrpy.readthedocs.io/en/latest/usage.html#record-modes
+pub enum RecordMode {
+    /// Record new interactions, replay previously recorded ones.
+    NewEpisodes,
+
+    /// Fail on new interactions, replay previously recorded ones.
+    OnlyReplay,
+}
+
+/// Build a replay client.
+pub struct Builder {
+    target: Option<RecordingTarget>,
+    record_mode: RecordMode
+}
+
+/// Records responses to requests and replays them if the request is unchanged.
+pub struct ReplayClient {
+    config: ClientConfig,
+    target: RecordingTarget,
+    force_record_next: AtomicBool,
+}
+
+impl Builder {
+    /// Create a new replay client builder instance.
+    pub fn new() -> Self {
+        Builder {
+            target: None,
+            record_mode: RecordMode::NewEpisodes
+        }
+    }
+
+    /// Specify the recording target.
+    pub fn target(&mut self, target: RecordingTarget) -> &mut Self {
+        self.target = target;
+        self
+    }
+
+    pub fn
+}
+
 impl RecordingTarget {
     /// Shorthand to specify `RecordingTarget::File`.
     pub fn file<P: Into<PathBuf>>(file: P) -> Self {
@@ -35,13 +77,6 @@ impl RecordingTarget {
     pub fn dir<P: Into<PathBuf>>(dir: P) -> Self {
         RecordingTarget::Dir(dir.into())
     }
-}
-
-/// Records responses to requests and replays them if the request is unchanged.
-pub struct ReplayClient {
-    config: ClientConfig,
-    target: RecordingTarget,
-    force_record_next: AtomicBool,
 }
 
 impl ReplayClient {
