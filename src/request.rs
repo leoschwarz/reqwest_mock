@@ -37,6 +37,8 @@ impl Request {
 impl<T> From<HttpRequest<T>> for Request where T: Into<Body> {
     fn from(r: HttpRequest<T>) -> Self {
         let header = RequestHeader {
+	    // TODO: Handle error when converting.
+	    //  Potentially https://github.com/seanmonstar/reqwest/issues/668 would provide a solution in the future.
             url: Url::parse(&format!("{}", r.uri())).unwrap(),
             method: r.method().clone(),
             headers: r.headers().clone(),
