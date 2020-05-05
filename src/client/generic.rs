@@ -1,3 +1,4 @@
+use crate::client::replay::RecordMode;
 use client::{Client, Response};
 use client::{DirectClient, RecordingTarget, ReplayClient, StubClient};
 use config::ClientConfig;
@@ -27,14 +28,14 @@ impl GenericClient {
     /// request to one single replay file. If a differing request is made, the file will be
     /// overwritten again.
     pub fn replay_file<P: Into<PathBuf>>(replay_file: P) -> Self {
-        ReplayClient::new(RecordingTarget::File(replay_file.into())).into()
+        ReplayClient::new(RecordingTarget::File(replay_file.into()), RecordMode::default()).into()
     }
 
     /// Create a `GenericClient` using `ReplayClient` internally, recording multiple requests
     /// to a single directory. Each unique request will get its own replay file independent of
     /// other requests in the specified directory.
     pub fn replay_dir<P: Into<PathBuf>>(replay_dir: P) -> Self {
-        ReplayClient::new(RecordingTarget::Dir(replay_dir.into())).into()
+        ReplayClient::new(RecordingTarget::Dir(replay_dir.into()), RecordMode::default()).into()
     }
 
     /// Create a `GenericClient` using `StubClient` internally.

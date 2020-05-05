@@ -18,7 +18,7 @@ fn main() {
     // httpbin should return a different UUID for every actual request
     assert_ne!(resp1, resp2);
 
-    let client2 = ReplayClient::new(RecordingTarget::file("simple.replay"));
+    let client2 = ReplayClient::builder().target_file("simple.replay").build().unwrap();
     let resp1 = perform_request(&client2, URL);
     let resp2 = perform_request(&client2, URL);
     assert_eq!(resp1, resp2);

@@ -15,6 +15,7 @@ use twox_hash::XxHash;
 const FORMAT_VERSION: u8 = 3;
 
 /// The recording target.
+#[derive(Clone, Debug)]
 pub enum RecordingTarget {
     /// A single file is used for recording one request, if the request changes the file is
     /// replaced by a new one.
@@ -28,6 +29,7 @@ pub enum RecordingTarget {
 /// Specify the record mode.
 ///
 /// Inspired by: https://vcrpy.readthedocs.io/en/latest/usage.html#record-modes
+#[derive(Clone, Copy, Debug)]
 pub enum RecordMode {
     /// Record new interactions, replay previously recorded ones.
     NewEpisodes,
@@ -46,7 +48,14 @@ pub struct Builder {
 pub struct ReplayClient {
     config: ClientConfig,
     target: RecordingTarget,
+    record_mode: RecordMode,
     force_record_next: AtomicBool,
+}
+
+impl Default for RecordMode {
+    fn default() -> Self {
+	RecordMode::NewEpisodes
+    }
 }
 
 impl Builder {
@@ -54,17 +63,33 @@ impl Builder {
     pub fn new() -> Self {
         Builder {
             target: None,
-            record_mode: RecordMode::NewEpisodes
+            record_mode: RecordMode::default()
         }
     }
 
     /// Specify the recording target.
-    pub fn target(&mut self, target: RecordingTarget) -> &mut Self {
-        self.target = target;
+    pub fn target(mut self, target: RecordingTarget) -> Self {
+        self.target = Some(target);
         self
     }
 
-    pub fn
+    pub fn target_file(self, file: impl Into<PathBuf>) -> Self {
+	self.target(RecordingTarget::File(file.into()))
+    }
+
+    pub fn target_directory(self, dir: impl Into<PathBuf>) -> Self {
+	self.target(RecordingTarget::Dir(dir.into()))
+    }
+
+    pub fn record_mode(mut self, record_mode: RecordMode) -> Self {
+	self.record_mode = record_mode;
+	self
+    }
+
+    pub fn build(self) -> Result<ReplayClient, Error> {
+	Ok(ReplayClient::new(self.target.ok_or_else(|| Error::from("Recording target not specified."))?,
+			  self.record_mode))
+    }
 }
 
 impl RecordingTarget {
@@ -81,17 +106,33 @@ impl RecordingTarget {
 
 impl ReplayClient {
     /// Create a new `ReplayClient` instance reading and writing to the specified target.
-    pub fn new(target: RecordingTarget) -> Self {
+    pub fn new(target: RecordingTarget, record_mode: RecordMode) -> Self {
         ReplayClient {
             config: ClientConfig::default(),
-            target: target,
+            target,
+	    record_mode,
             force_record_next: AtomicBool::new(false),
         }
     }
 
+    /// Create a new replay client using the builder interface.
+    pub fn builder() -> Builder {
+	Builder::new()
+    }
+
     /// Calling this method ensures that whatever next request is performed it will be recorded
     /// again, even the exact same request was already made before.
+    ///
+    /// # Panics
+    ///
+    /// When the record mode does not allow recording new requests, this will result in a panic.
     pub fn force_record_next(&self) {
+	match self.record_mode {
+	    RecordMode::NewEpisodes => {},
+	    RecordMode::OnlyReplay => {
+		panic!("RecordMode is OnlyReplay, but tried to force recording next request.");
+	    },
+	};
         self.force_record_next.store(true, Ordering::SeqCst);
     }
 
@@ -196,10 +237,18 @@ impl Client for ReplayClient {
         if let Some(d) = data {
             if d.request == req {
                 return Ok(d.response);
-            } else {
-                // TODO better message
-                info!("reqwest_mock: Request has changed, recording again now.");
             }
+
+	    // No recorded request is available, determine what to do now.
+	    match self.record_mode {
+		RecordMode::NewEpisodes => {
+		    // TODO better message
+		    info!("reqwest_mock: Request has changed, recording again now.");
+		},
+		RecordMode::OnlyReplay => {
+		    return Err(Error::from("Request was not recorded before, and OnlyReplay mode was selected."));
+		},
+	    }
         }
 
         // We actually have to perform the request and store the response.
