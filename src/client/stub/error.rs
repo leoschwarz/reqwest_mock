@@ -4,6 +4,7 @@ use std::io;
 // TODO: impl Error
 
 // TODO: Should be crate or module visible.
+#[derive(Debug)]
 pub struct FieldError {
     /// The name of the missing field.
     pub field_name: &'static str,
@@ -12,6 +13,7 @@ pub struct FieldError {
 }
 
 // TODO: Variants should be private.
+#[derive(Debug)]
 pub enum RegisterStubError {
     // "Tried registering stub without `{}` even though `{}` requires its presence."
     MissingField(FieldError),
