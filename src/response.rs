@@ -1,5 +1,6 @@
 use base64;
 use error::Error;
+use http::Response as HttpResponse;
 use reqwest::header::HeaderMap;
 use reqwest::{StatusCode, Url};
 use serde::de::Error as DeError;
@@ -122,6 +123,22 @@ impl<'de> Visitor<'de> for ResponseVisitor {
             headers: headers.ok_or_else(|| DeError::missing_field(F_HEADERS))?,
             body: body.ok_or_else(|| DeError::missing_field(F_BODY))?,
         })
+    }
+}
+
+impl From<Response> for HttpResponse<Vec<u8>> {
+    fn from(r: Response) -> HttpResponse<Vec<u8>> {
+        let mut http_rsp = HttpResponse::builder()
+            .status(r.status);
+        let headers = http_rsp.headers_mut().unwrap();
+        let mut last_header = None;
+        for (key, value) in r.headers {
+            if key.is_some() {
+                last_header = key.clone();
+            }
+            headers.insert(last_header.clone().unwrap(), value);
+        }
+        http_rsp.body(r.body).unwrap()
     }
 }
 
