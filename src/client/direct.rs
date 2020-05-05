@@ -34,7 +34,7 @@ impl Client for DirectClient {
         let config = config.unwrap_or_else(|| &self.config);
 
         // Setup the client instance.
-        let mut client_builder = ::reqwest::Client::builder()
+        let mut client_builder = ::reqwest::blocking::Client::builder()
             .gzip(config.gzip)
             .redirect(config.redirect.clone().into())
             .referer(config.referer);
@@ -46,7 +46,7 @@ impl Client for DirectClient {
         // Build the request.
         let mut builder = client.request(request.header.method, request.header.url);
         if let Some(body) = request.body {
-            builder = builder.body(::reqwest::Body::from(body));
+            builder = builder.body(::reqwest::blocking::Body::from(body));
         }
 
         // Send the request.
