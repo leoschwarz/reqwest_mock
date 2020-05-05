@@ -70,8 +70,9 @@ mod replay;
 pub use self::replay::{RecordingTarget, ReplayClient};
 
 mod stub;
-pub use self::stub::{RequestStubber, ResponseStubber, StubClient, StubDefault, StubSettings,
-                     StubStrictness};
+pub use self::stub::{
+    RequestStubber, ResponseStubber, StubClient, StubDefault, StubSettings, StubStrictness,
+};
 
 mod generic;
 pub use self::generic::GenericClient;

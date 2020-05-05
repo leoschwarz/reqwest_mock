@@ -60,8 +60,8 @@ extern crate url;
 
 mod helper;
 
-pub mod error;
 pub mod config;
+pub mod error;
 
 mod body;
 pub use body::Body;

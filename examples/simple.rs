@@ -2,8 +2,8 @@ extern crate reqwest_mock;
 
 use reqwest_mock::client::*;
 
-const URL: &'static str = "https://now.httpbin.org/";
-const URL2: &'static str = "https://now.httpbin.org/#";
+const URL: &'static str = "https://httpbin.org/uuid";
+const URL2: &'static str = "https://httpbin.org/uuid#";
 
 fn perform_request<C: Client>(client: &C, url: &str) -> String {
     // This method is just a placeholder for some fancy computations.
@@ -12,23 +12,22 @@ fn perform_request<C: Client>(client: &C, url: &str) -> String {
 }
 
 fn main() {
-    let c1 = DirectClient::new();
-    let r1 = perform_request(&c1, URL);
-    let r2 = perform_request(&c1, URL);
-    // There was a delay between the two requests, so httpbin should have returned two different
-    // times.
-    assert_ne!(r1, r2);
+    let client1 = DirectClient::new();
+    let resp1 = perform_request(&client1, URL);
+    let resp2 = perform_request(&client1, URL);
+    // httpbin should return a different UUID for every actual request
+    assert_ne!(resp1, resp2);
 
-    let c2 = ReplayClient::new(RecordingTarget::file("simple.replay"));
-    let r1 = perform_request(&c2, URL);
-    let r2 = perform_request(&c2, URL);
-    assert_eq!(r1, r2);
+    let client2 = ReplayClient::new(RecordingTarget::file("simple.replay"));
+    let resp1 = perform_request(&client2, URL);
+    let resp2 = perform_request(&client2, URL);
+    assert_eq!(resp1, resp2);
 
-    let r3 = perform_request(&c2, URL2);
-    assert_ne!(r1, r3);
+    let resp3 = perform_request(&client2, URL2);
+    assert_ne!(resp1, resp3);
 
-    let r4 = perform_request(&c2, URL2);
-    assert_eq!(r3, r4);
+    let resp4 = perform_request(&client2, URL2);
+    assert_eq!(resp3, resp4);
 
     println!("Tests finished.");
 }

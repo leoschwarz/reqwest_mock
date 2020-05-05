@@ -15,7 +15,10 @@ pub fn serialize_headers(headers: &HeaderMap) -> BTreeMap<String, String> {
 pub fn deserialize_headers(map: &BTreeMap<String, String>) -> HeaderMap {
     let mut headers = ::reqwest::header::HeaderMap::new();
     for (name, value) in map.iter() {
-        headers.insert(HeaderName::from_bytes(name.as_ref()).unwrap(), HeaderValue::from_str(value).unwrap());
+        headers.insert(
+            HeaderName::from_bytes(name.as_ref()).unwrap(),
+            HeaderValue::from_str(value).unwrap(),
+        );
     }
 
     headers

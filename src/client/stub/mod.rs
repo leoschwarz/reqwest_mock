@@ -156,22 +156,22 @@ impl StubClient {
     ) -> Result<(), RegisterStubError> {
         // Check if stub key contains the nescessary fields.
         macro_rules! validate_sk_field {
-            (Some $field:ident $strictness:path) => (
+            (Some $field:ident $strictness:path) => {
                 if key.$field.is_none() {
                     return Err(RegisterStubError::MissingField(FieldError {
                         field_name: stringify!($field),
-                        strictness: stringify!($strictness)
+                        strictness: stringify!($strictness),
                     }));
                 }
-            );
-            (None $field:ident $strictness:path) => (
+            };
+            (None $field:ident $strictness:path) => {
                 if key.$field.is_some() {
                     return Err(RegisterStubError::UnescessaryField(FieldError {
                         field_name: stringify!($field),
-                        strictness: stringify!($strictness)
+                        strictness: stringify!($strictness),
                     }));
                 }
-            );
+            };
         }
 
         macro_rules! validate_sk_fields {
@@ -239,7 +239,8 @@ impl Client for StubClient {
                         Err(format!(
                             "Requested {}, without having provided a stub for it.",
                             header.url
-                        ).into())
+                        )
+                        .into())
                     }
                     StubDefault::PerformRequest => {
                         use client::DirectClient;

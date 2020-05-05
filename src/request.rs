@@ -1,10 +1,10 @@
 use body::Body;
 use http::Request as HttpRequest;
-use reqwest::{Method, Url};
 use reqwest::header::HeaderMap;
-use serde::ser::{Serialize, SerializeStruct, Serializer};
-use serde::de::{Deserialize, Deserializer, MapAccess, Unexpected, Visitor};
+use reqwest::{Method, Url};
 use serde::de::Error as DeError;
+use serde::de::{Deserialize, Deserializer, MapAccess, Unexpected, Visitor};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
