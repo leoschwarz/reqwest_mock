@@ -5,9 +5,9 @@
 
 Provides a mockable [reqwest][]-like HTTP client.
 
-Write your code generic over the [Client](trait.Client.html) trait,
-and in production use [DirectClient](struct.DirectClient.html) while in testing
-you can use [ReplayClient](struct.ReplayClient.html), which will record a request
+Write your code generic over the [Client](https://docs.rs/reqwest_mock/latest/reqwest_mock/client/trait.Client.html) trait,
+and in production use [DirectClient](https://docs.rs/reqwest_mock/latest/reqwest_mock/client/struct.DirectClient.html) while in testing
+you can use [ReplayClient](https://docs.rs/reqwest_mock/latest/reqwest_mock/client/struct.ReplayClient.html), which will record a request
 the first time and replay it every time the exact same request is made in the
 future.
 
