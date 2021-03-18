@@ -76,3 +76,6 @@ pub use self::stub::{
 
 mod generic;
 pub use self::generic::GenericClient;
+
+mod rocket;
+pub use self::rocket::RocketClient;
