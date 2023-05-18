@@ -1,9 +1,21 @@
-# reqwest_mock
-[![crates.io](http://meritbadge.herokuapp.com/reqwest_mock)](https://crates.io/crates/reqwest_mock)
-[![Docs](https://docs.rs/reqwest_mock/badge.svg)](https://docs.rs/reqwest_mock/)
-[![Build Status](https://travis-ci.org/leoschwarz/reqwest_mock.svg?branch=master)](https://travis-ci.org/leoschwarz/reqwest_mock)
+# reqwest_mock: Discontinued
+Thank you for your interest in this project.
+This project was a proof of concept to create a generic interface for the Rust reqwest crate that would allow users to mock and record and replay HTTP requests for testing purposes.
 
-Provides a mockable [reqwest][]-like HTTP client.
+This project is no longer updated or maintained and this repository will be archived.
+
+The following non-exhaustive list of alternative solutions are recommended instead to mock HTTP requests in Rust (as of 18.5.2023):
+
+- https://github.com/chorusone/rvcr
+- https://github.com/lukemathwalker/wiremock-rs
+- https://github.com/beltram/stubr
+- https://github.com/alexliesenfeld/httpmock
+- https://github.com/lipanski/mockito
+
+## Old readme
+[Crates.io Link](https://crates.io/crates/reqwest_mock)
+
+Provides a mockable reqwest-like HTTP client.
 
 Write your code generic over the [Client](https://docs.rs/reqwest_mock/latest/reqwest_mock/client/trait.Client.html) trait,
 and in production use [DirectClient](https://docs.rs/reqwest_mock/latest/reqwest_mock/client/struct.DirectClient.html) while in testing
